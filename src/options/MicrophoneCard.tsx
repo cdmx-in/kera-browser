@@ -1,4 +1,4 @@
-// Settings → Permissions → Microphone, after Claude in Chrome's: whether Nanobrowser may use the microphone for voice
+// Settings → Permissions → Microphone, after Claude in Chrome's: whether Kera Browser may use the microphone for voice
 // input, with the way to allow it or to turn it off in Chrome.
 import { useEffect, useState } from 'react';
 import { Button } from '@src/ui/components';

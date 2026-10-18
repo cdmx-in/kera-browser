@@ -210,7 +210,7 @@ export class TabScope {
       await chrome.tabGroups
         .update(group.groupId, {
           color: colorOf(conversationId),
-          title: `${PREFIX[status] ?? ''}Nanobrowser · ${short || 'chat'}`,
+          title: `${PREFIX[status] ?? ''}Kera Browser · ${short || 'chat'}`,
         })
         .catch(() => undefined);
     }
@@ -264,7 +264,7 @@ export class TabScope {
         // Without the tabGroups permission the group keeps no title and Chrome's default colour.
         if (chrome.tabGroups) {
           await chrome.tabGroups
-            .update(groupId, { color: colorOf(conversationId), title: 'Nanobrowser' })
+            .update(groupId, { color: colorOf(conversationId), title: 'Kera Browser' })
             .catch(() => undefined);
         }
         state.groups[conversationId] = { groupId, windowId: tab.windowId };

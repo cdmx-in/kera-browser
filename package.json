@@ -1,12 +1,12 @@
 {
-  "name": "nanobrowser",
-  "version": "0.3.0",
+  "name": "kera-browser",
+  "version": "1.0.0",
   "private": true,
-  "description": "AI web automation Chrome extension",
+  "description": "Kera Browser: Kera's AI agent in Chrome's side panel",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nanobrowser/nanobrowser.git"
+    "url": "https://github.com/cdmx-in/kera-browser.git"
   },
   "type": "module",
   "scripts": {

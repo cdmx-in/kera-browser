@@ -161,7 +161,7 @@ defineCheck({
         'the Save card in Auto mode',
       );
       report.cardInAuto = card.includes('nb-check-optional.csv');
-      report.askFirstShown = card.includes('Chrome asks you first to let Nanobrowser save files.');
+      report.askFirstShown = card.includes('Chrome asks you first to let Kera Browser save files.');
       await panel(id, 'click', { label: 'Save' });
       const refused = await until(
         async () => (await panel(id, 'read')).body,
@@ -217,7 +217,7 @@ defineCheck({
       await waitForLoad(settings.id!);
       await until(
         async () => (await options('read')).body ?? '',
-        b => b.includes('Welcome to Nanobrowser'),
+        b => b.includes('Welcome to Kera Browser'),
         'the welcome page',
       );
       await options('click', { label: 'Next' });

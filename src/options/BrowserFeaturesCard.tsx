@@ -1,4 +1,4 @@
-// Additional browser permissions: Chrome permissions Nanobrowser asks for only when the user allows them (tab groups, notifications,
+// Additional browser permissions: Chrome permissions Kera Browser asks for only when the user allows them (tab groups, notifications,
 // saving files). Settings → Permissions lists each with a green check once allowed, as the Microphone card does; the
 // welcome page's tips show one row. Allow asks Chrome for all of them in one dialog, from the click.
 import { Button } from '@src/ui/components';

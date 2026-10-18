@@ -137,7 +137,7 @@ export function setBorder(state: BorderState): Promise<void> | void {
     host.style.cssText =
       'all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;display:block;contain:strict';
     const root = host.attachShadow({ mode: 'closed' });
-    const blue = 'rgb(0 115 220 / 0.6)';
+    const blue = 'rgb(30 127 140 / 0.6)';
     const violet = 'rgb(124 92 255 / 0.6)';
     const along = (side: string) => `linear-gradient(${side}, ${violet}, ${blue} 25%, ${blue} 75%, ${violet})`;
     root.innerHTML = `<style>

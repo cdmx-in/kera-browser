@@ -30,7 +30,7 @@ export default defineConfig({
     action: { default_icon: 'icon-32.png', default_title: '__MSG_actionTitle__' },
     icons: { 128: 'icon-128.png' },
     commands: {
-      'open-panel': { suggested_key: { default: 'Alt+Shift+N' }, description: '__MSG_commandOpenPanel__' },
+      'open-panel': { suggested_key: { default: 'Alt+Shift+K' }, description: '__MSG_commandOpenPanel__' },
       'open-test-panel': { description: 'Open the browser control test panel (developers)' },
     },
   },

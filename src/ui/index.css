@@ -3,39 +3,39 @@
 @tailwind utilities;
 
 /*
- * The brand (the Nanobrowser brandbook). Primary #0073DC and sky #19C2FF on a pale sky canvas in light; a deep navy
- * canvas in dark. Text colours meet WCAG AA on the canvas, the surfaces and the cards. Fonts are the system's: sans for
- * the interface, and the system's serif for answers, as in Claude in Chrome's side panel.
+ * The brand (Kera's): deep teal #1E7F8C and bright teal #3DAFC4 on a pale canvas in light; Kera's near-black canvas
+ * in dark. Text colours meet WCAG AA on the canvas, the surfaces and the cards. Fonts are the system's: sans for the
+ * interface, and the system's serif for answers, as in Claude in Chrome's side panel.
  */
 :root {
-  --nb-canvas: 250 251 253;
+  --nb-canvas: 247 250 250;
   --nb-bg: 255 255 255;
-  --nb-fg: 15 27 45;
-  --nb-muted: 91 107 130;
-  --nb-border: 214 227 240;
-  --nb-surface: 234 244 252;
-  --nb-accent: 0 115 220;
-  --nb-accent-strong: 0 95 184;
-  --nb-sky: 25 194 255;
-  --nb-link: 0 104 201;
+  --nb-fg: 20 33 36;
+  --nb-muted: 92 110 115;
+  --nb-border: 208 225 228;
+  --nb-surface: 232 244 246;
+  --nb-accent: 30 127 140;
+  --nb-accent-strong: 23 104 115;
+  --nb-sky: 61 175 196;
+  --nb-link: 23 104 115;
   --nb-auto: 180 83 9;
-  --nb-shadow: 30 70 150;
+  --nb-shadow: 20 60 65;
   color-scheme: light;
 }
 
 .dark {
-  --nb-canvas: 10 18 32;
-  --nb-bg: 17 29 50;
-  --nb-fg: 238 244 255;
-  --nb-muted: 148 166 192;
-  --nb-border: 40 58 88;
-  --nb-surface: 26 42 69;
-  --nb-accent: 0 115 220;
-  --nb-accent-strong: 26 132 232;
-  --nb-sky: 25 194 255;
-  --nb-link: 92 176 255;
+  --nb-canvas: 23 23 23;
+  --nb-bg: 32 32 32;
+  --nb-fg: 236 240 240;
+  --nb-muted: 160 172 175;
+  --nb-border: 58 58 58;
+  --nb-surface: 42 42 42;
+  --nb-accent: 30 127 140;
+  --nb-accent-strong: 61 175 196;
+  --nb-sky: 61 175 196;
+  --nb-link: 110 205 220;
   --nb-auto: 251 191 36;
-  --nb-shadow: 0 8 24;
+  --nb-shadow: 0 0 0;
   color-scheme: dark;
 }
 
@@ -65,33 +65,29 @@ h3 {
   @apply bg-nb-sky/30;
 }
 
-/* The brand's wave behind the welcome and microphone pages; a navy field in dark. */
+/* A soft teal field behind the welcome and microphone pages; Kera's dark field in dark. */
 .nb-wave {
-  background:
-    url('/brand/wave.jpg') center top / cover no-repeat fixed,
-    rgb(var(--nb-canvas));
+  background: linear-gradient(160deg, rgb(232 244 246) 0%, rgb(var(--nb-canvas)) 60%) fixed;
 }
 .dark .nb-wave {
-  background: linear-gradient(140deg, #0b1730 0%, #0c1626 40%, #0a1220 70%, #0f1c34 100%) fixed;
+  background: linear-gradient(140deg, #1a2426 0%, #171717 45%, #171717 100%) fixed;
 }
 
-/* The panel's new-chat page, after Gemini in Chrome's: the brand background's strongest blue band, turned upside down
-   and shrunk to 16 by 8 pixels so it spreads into a soft field, fills the lower 65% and fades in from the middle, under
-   the quick start and the composer; a blue glow at the bottom of the navy field in dark. */
+/* The panel's new-chat page: a teal glow that fills the lower part and fades in from the middle, under the quick
+   start and the composer. */
 .nb-start {
   background:
-    linear-gradient(to bottom, #f6fcff 35%, rgb(246 252 255 / 0) 75%),
-    url('/brand/panel-wave.png') center bottom / 100% 65% no-repeat,
-    #f6fcff;
+    linear-gradient(to bottom, #f6fbfb 35%, rgb(246 251 251 / 0) 75%),
+    radial-gradient(120% 55% at 50% 100%, rgb(61 175 196 / 0.28), transparent 70%), #f6fbfb;
 }
 .dark .nb-start {
-  background: radial-gradient(120% 45% at 30% 100%, rgb(0 115 220 / 0.25), transparent 70%), rgb(var(--nb-canvas));
+  background: radial-gradient(120% 45% at 30% 100%, rgb(30 127 140 / 0.3), transparent 70%), rgb(var(--nb-canvas));
 }
 
 /* The settings page's field: the plain canvas in light, as under the panel's conversation, so the forms read calmly
-   and the page matches the panel; a navy gradient in dark. */
+   and the page matches the panel; the dark field in dark. */
 .dark .nb-field {
-  background: linear-gradient(140deg, #0b1730 0%, #0c1626 40%, #0a1220 70%, #0f1c34 100%) fixed;
+  background: linear-gradient(140deg, #1a2426 0%, #171717 45%, #171717 100%) fixed;
 }
 
 /* Thin, quiet scrollbars in the narrow panel. */

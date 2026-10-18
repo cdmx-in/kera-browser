@@ -113,7 +113,7 @@ defineCheck({
     await waitForLoad(mic.id!);
     await sleep(600);
     const [title] = await chrome.tabs.query({ active: true, currentWindow: true });
-    report.micPage = title?.title === 'Microphone for Nanobrowser';
+    report.micPage = title?.title === 'Microphone for Kera Browser';
     await chrome.tabs.remove(mic.id!);
 
     await chrome.storage.local.set({

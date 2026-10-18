@@ -18,7 +18,7 @@ describe('cards', () => {
   it('a take-over the agent asks for keeps its own title, even when the agent copies the detected-step title', () => {
     const html = render(
       card('ask-takeover', {
-        message: 'Nanobrowser detected a step that is yours: enter your password',
+        message: 'Kera Browser detected a step that is yours: enter your password',
         site: 'evil.example',
       }),
     );
@@ -29,7 +29,7 @@ describe('cards', () => {
 
   it('a detected payment opens the other card, with no Approve', () => {
     const html = render(card('handover', { reason: 'pay', site: 'dell.com', target: 'button «Pay»' }));
-    expect(html).toMatch(/<h2[^>]*>Nanobrowser detected a step that is yours · payment<\/h2>/);
+    expect(html).toMatch(/<h2[^>]*>Kera Browser detected a step that is yours · payment<\/h2>/);
     expect(html).toContain('Complete the payment on dell.com yourself.');
     expect(html).not.toMatch(/Approve|>Allow</);
     expect(html).toMatch(/>Done</);

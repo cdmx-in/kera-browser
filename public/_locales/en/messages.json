@@ -1,17 +1,17 @@
 {
   "extName": {
-    "message": "Nanobrowser"
+    "message": "Kera Browser"
   },
   "extDescription": {
-    "message": "An AI agent that works in your browser, in a side panel beside the page"
+    "message": "Kera's AI agent in a side panel beside the page: it reads pages and works on them for you"
   },
   "actionTitle": {
-    "message": "Open Nanobrowser"
+    "message": "Open Kera Browser"
   },
   "commandOpenPanel": {
-    "message": "Open the Nanobrowser panel"
+    "message": "Open the Kera Browser panel"
   },
   "menuAskAboutSelection": {
-    "message": "Ask Nanobrowser about this"
+    "message": "Ask Kera Browser about this"
   }
 }

@@ -217,15 +217,14 @@ export function LogoMark({ size = 20, className = '' }: { size?: number; classNa
   return <img src="/icon-128.png" alt="" width={size} height={size} className={`shrink-0 ${className}`} />;
 }
 
-/** The brand's horizontal logo: the mark and "Nanobrowser". */
+/** The brand's horizontal logo: the mark and "Kera Browser". */
 export function Logo({ height = 28, className = '' }: { height?: number; className?: string }) {
   return (
-    <img
-      src="/brand/logo-horizontal.png"
-      alt="Nanobrowser"
-      height={height}
-      style={{ height, width: 'auto' }}
-      className={className}
-    />
+    <span className={`inline-flex items-center gap-2 ${className}`} style={{ height }}>
+      <LogoMark size={height} />
+      <span className="font-semibold tracking-tight" style={{ fontSize: height * 0.68, lineHeight: 1 }}>
+        Kera Browser
+      </span>
+    </span>
   );
 }
