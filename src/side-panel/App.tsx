@@ -22,7 +22,6 @@ import { HistoryDrawer } from './History';
 import { Cards, containsCardNumber } from './Cards';
 import { NoticeCard } from './NoticeCard';
 import { WhatsNewCard, useWhatsNew } from './WhatsNewCard';
-import { RatingCard, ratingMovedOn, useRatingCard } from './RatingCard';
 import { TabBar } from './TabBar';
 import { QueueList, RunBar } from './RunControls';
 import type { MessageKey } from '@src/ui/i18n';
@@ -40,7 +39,6 @@ const NO_KEYS: Record<string, string> = {};
 
 /** The starters a new conversation offers when no shortcut is pinned: a short label and the text it sends. */
 const STARTERS = [
-  { label: 'panel.starter.star', text: 'panel.starter.starText' },
   { label: 'panel.starter.summarize', text: 'panel.starter.summarizeText' },
   { label: 'panel.starter.news', text: 'panel.starter.newsText' },
 ] as const;
@@ -214,12 +212,8 @@ export function App() {
     void settingsStorage.set(s => ({ ...s, defaultModel: next.model, reasoning: next.reasoning }));
   };
   const active = isActive(state.status);
-  const ratingCard = useRatingCard(state.conversationId, state.startedAt, active, !!whatsNew);
-  /** Sends a command the user gave that starts a run; with the rating card showing, it is their Maybe later. */
-  const startRun = (command: PanelCommand) => {
-    if (ratingCard) ratingMovedOn();
-    client?.send(command);
-  };
+  /** Sends a command the user gave that starts a run. */
+  const startRun = (command: PanelCommand) => client?.send(command);
   const history = state.entries.filter(e => e.kind === 'user').map(e => (e as { text: string }).text);
 
   /**
@@ -504,9 +498,8 @@ export function App() {
         history={history}
         notice={
           <>
-            {/* The What's new card comes first; the notices below still show under it. The rating card waits for it (useRatingCard). */}
+            {/* The What's new card comes first; the notices below still show under it. */}
             {whatsNew ? <WhatsNewCard release={whatsNew} /> : null}
-            {ratingCard ? <RatingCard /> : null}
             {attachError ? (
               <p className="text-xs text-amber-700 dark:text-amber-300" role="alert">
                 {attachError}

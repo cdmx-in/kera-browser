@@ -6,7 +6,6 @@ import { RunManager } from './run-manager';
 import { listenForSelections } from './selection';
 import { upgradeFromOldVersion } from './upgrade';
 import { analyticsReady, listenForSwitches, recordInstall } from './analytics';
-import { setUninstallPage } from './uninstall';
 import { openWhatsNew } from '@src/store/whats-new';
 import { WHATS_NEW, releaseOf } from '@src/ui/whats-new';
 import { DATA_REQUEST } from '@src/ui/protocol';
@@ -51,4 +50,3 @@ void upgradeFromOldVersion().catch(error => console.error('[upgrade] move failed
 // Analytics waits for that move, then applies the old version's choice once; nothing is sent before.
 void analyticsReady();
 listenForSwitches();
-setUninstallPage();
