@@ -120,6 +120,17 @@ describe('providers', () => {
     expect(r.url).toBe('http://10.0.0.2:8000/v1/chat/completions');
   });
 
+  it("Kera: its fixed address, whatever a card stored, with the user's Kera key", async () => {
+    const r = await capture({
+      kind: 'kera',
+      modelName: 'gpt-6-luna',
+      apiKey: 'sk-kera',
+      baseUrl: 'https://example.com/v1',
+    });
+    expect(r.url).toBe('https://kera.cdmx.io/api/chat/completions');
+    expect(r.headers.get('authorization')).toBe('Bearer sk-kera');
+  });
+
   it('OpenRouter sends its headers', async () => {
     const r = await capture({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5', apiKey: 'or' });
     expect(r.url).toBe('https://openrouter.ai/api/v1/chat/completions');
@@ -136,5 +147,9 @@ describe('helpers', () => {
 
   it("keeps OpenRouter's fixed address, whatever an older card stored", () => {
     expect(openAICompatibleBaseUrl('openrouter', 'https://example.com/v1')).toBe('https://openrouter.ai/api/v1');
+  });
+
+  it("keeps Kera's fixed address too", () => {
+    expect(openAICompatibleBaseUrl('kera', 'https://example.com/v1')).toBe('https://kera.cdmx.io/api');
   });
 });

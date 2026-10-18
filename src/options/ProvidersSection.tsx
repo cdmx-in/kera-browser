@@ -3,7 +3,7 @@
 // src/llm from this page; settings are written through chrome.storage, with no worker command.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import { listModels } from '@src/llm';
+import { listModels, voiceModelsFor } from '@src/llm';
 import type { ConnectionResult, ModelList, ProviderKind } from '@src/llm';
 import type { ReasoningEffort } from '@src/llm/catalogue';
 import {
@@ -28,6 +28,7 @@ import { t } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 
 export const KINDS: Array<{ kind: ProviderKind; label: string; needsKey: boolean; baseUrl?: string }> = [
+  { kind: 'kera', label: 'Kera', needsKey: true },
   { kind: 'anthropic', label: 'Anthropic', needsKey: true },
   { kind: 'openai', label: 'OpenAI', needsKey: true },
   { kind: 'gemini', label: 'Google Gemini', needsKey: true },
@@ -40,25 +41,19 @@ export const KINDS: Array<{ kind: ProviderKind; label: string; needsKey: boolean
 const EMPTY_PROVIDERS: ProviderConfig[] = [];
 const EMPTY_KEYS: Record<string, string> = {};
 
-/**
- * Presets: cloud endpoints that speak chat completions, added as OpenAI-compatible providers but listed and named as
- * providers of their own.
- */
-const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [
-  { id: 'xai', label: 'xAI Grok', baseUrl: 'https://api.x.ai/v1' },
-  { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
-  { id: 'mistral', label: 'Mistral', baseUrl: 'https://api.mistral.ai/v1' },
-];
+/** The kinds a user may add: Kera alone, so page content goes to Kera and nowhere else. */
+export const ENABLED_KINDS: readonly ProviderKind[] = ['kera'];
 
 /**
- * The Add a provider list: the vendors' own APIs (OpenAI, Anthropic, then Google Gemini), with the presets among them
- * as providers of their own, then OpenRouter, the local servers and any other OpenAI-compatible endpoint.
+ * Presets: cloud endpoints that speak chat completions, added as OpenAI-compatible providers but listed and named as
+ * providers of their own. None in Kera Browser.
  */
-const VENDORS: ProviderKind[] = ['openai', 'anthropic', 'gemini'];
+const PRESETS: Array<{ id: string; label: string; baseUrl: string }> = [];
+
+/** The Add a provider list: the enabled kinds in KINDS' order, then the presets. */
 const CHOICES: Array<{ value: string; label: string }> = [
-  ...VENDORS.map(kind => ({ value: kind, label: kindInfo(kind).label })),
+  ...KINDS.filter(k => ENABLED_KINDS.includes(k.kind)).map(k => ({ value: k.kind, label: k.label })),
   ...PRESETS.map(p => ({ value: p.id, label: p.label })),
-  ...KINDS.filter(k => !VENDORS.includes(k.kind)).map(k => ({ value: k.kind, label: k.label })),
 ];
 
 function kindInfo(kind: ProviderKind) {
@@ -148,7 +143,7 @@ export function ProvidersSection() {
           </label>
         ) : null}
       </SettingsCard>
-      <VoiceCard />
+      {ENABLED_KINDS.some(k => voiceModelsFor(k).length) ? <VoiceCard /> : null}
       <SettingsCard title={t('settings.nav.providers')} className="flex flex-col gap-4">
         <Notice tone="ok">{t('models.keysNote')}</Notice>
         {providers.length ? (

@@ -5,9 +5,10 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
+import { KERA_BASE_URL } from './kera';
 
 export type ProviderKind =
-  'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter';
+  'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter' | 'kera';
 
 /** Everything needed to call one model. The key is passed in; src/llm never reads storage. */
 export interface ModelSpec {
@@ -39,6 +40,7 @@ export const DEFAULT_BASE_URLS: Partial<Record<ProviderKind, string>> = {
   ollama: 'http://localhost:11434/v1',
   lmstudio: 'http://localhost:1234/v1',
   openrouter: 'https://openrouter.ai/api/v1',
+  kera: KERA_BASE_URL,
 };
 
 /**
@@ -50,6 +52,7 @@ export const CHAT_COMPLETIONS_KINDS: readonly ProviderKind[] = [
   'ollama',
   'lmstudio',
   'openrouter',
+  'kera',
 ];
 
 /**
@@ -58,8 +61,8 @@ export const CHAT_COMPLETIONS_KINDS: readonly ProviderKind[] = [
  */
 export function openAICompatibleBaseUrl(kind: ProviderKind, baseUrl?: string): string | undefined {
   const fallback = DEFAULT_BASE_URLS[kind];
-  // OpenRouter's address is fixed: the card has no field for it.
-  if (kind === 'openrouter') return fallback;
+  // OpenRouter's and Kera's addresses are fixed: their cards have no field for them.
+  if (kind === 'openrouter' || kind === 'kera') return fallback;
   const url = (baseUrl?.trim() || fallback)?.replace(/\/+$/, '');
   if (!url) return undefined;
   if (kind === 'ollama' || kind === 'lmstudio') return url.endsWith('/v1') ? url : `${url}/v1`;

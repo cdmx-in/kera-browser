@@ -1,5 +1,5 @@
-// The first run: the welcome page, opened when the extension is installed. Three steps: what Nanobrowser does with a
-// coach mark for Chrome's pin button; choosing a model (local or cloud, or Set it later); and three tips for safe use,
+// The first run: the welcome page, opened when the extension is installed. Three steps: what Kera Browser does with a
+// coach mark for Chrome's pin button; choosing a model (Kera, with your key, or Set it later); and three tips for safe use,
 // with a row that allows the browser features.
 // It uses Settings' type and cards, with the logo above the title.
 import { Fragment, useEffect, useRef, useState } from 'react';
@@ -9,12 +9,13 @@ import type { ModelList, ProviderKind } from '@src/llm';
 import { newId } from '@src/store/conversations';
 import { DEFAULT_SETTINGS, findModel, keysStorage, providersStorage, settingsStorage } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
-import { Button, Input, Notice, Select, Switch } from '@src/ui/components';
+import { Button, Input, Notice, Select } from '@src/ui/components';
 import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 import { applyTheme } from '@src/ui/theme';
-import { KeyInput, KINDS, ListedCount, OriginFix } from './ProvidersSection';
+import { ENABLED_KINDS, KeyInput, KINDS, ListedCount, OriginFix } from './ProvidersSection';
+import { KERA_DEFAULT_MODEL } from '@src/llm/kera';
 import { SettingsCard, SettingsRow } from './SettingsCard';
 import { BrowserFeaturesRow } from './BrowserFeaturesCard';
 import { listProblem, testModel } from './model-test';
@@ -163,36 +164,18 @@ function WelcomeStep() {
 }
 
 function ModelStep() {
-  const [choice, setChoice] = useState<'local' | 'cloud' | null>(null);
-  const options: Array<{ id: 'local' | 'cloud'; label: MessageKey; hint: MessageKey }> = [
-    { id: 'local', label: 'welcome.model.local', hint: 'welcome.model.localHint' },
-    { id: 'cloud', label: 'welcome.model.cloud', hint: 'welcome.model.cloudHint' },
-  ];
+  // Kera Browser has one provider, so there is no local-or-cloud choice to make.
   return (
     <>
       <p>{t('welcome.model.intro')}</p>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t('welcome.step.model')}>
-        {options.map(o => (
-          <button
-            key={o.id}
-            type="button"
-            role="radio"
-            aria-checked={choice === o.id}
-            className={`flex flex-col gap-1 rounded-xl border bg-nb-bg px-5 py-4 text-left transition-colors ${choice === o.id ? 'border-nb-accent ring-2 ring-nb-accent/20' : 'border-nb-border hover:border-nb-accent/40'}`}
-            onClick={() => setChoice(o.id)}>
-            <span className="text-base">{t(o.label)}</span>
-            <span className="text-sm leading-relaxed text-nb-muted">{t(o.hint)}</span>
-          </button>
-        ))}
-      </div>
-      {choice ? <ModelSetup key={choice} local={choice === 'local'} /> : null}
+      <ModelSetup local={false} />
     </>
   );
 }
 
 const LOCAL: ProviderKind[] = ['ollama', 'lmstudio'];
-// The cloud providers in the welcome page's order, OpenAI first.
-const CLOUD: ProviderKind[] = ['openai', 'anthropic', 'gemini', 'openrouter'];
+// The cloud providers in the welcome page's order: the enabled kinds.
+const CLOUD: ProviderKind[] = [...ENABLED_KINDS];
 
 /** Connect to a server or a provider, pick a model, test its tool calling and make it the default. */
 function ModelSetup({ local }: { local: boolean }) {
@@ -219,7 +202,8 @@ function ModelSetup({ local }: { local: boolean }) {
       setFound(list);
       // When every model is hidden, the list shows them all rather than look empty.
       setShowAll(!list.models.length);
-      setName(list.models[0] ?? list.hidden[0] ?? '');
+      // Kera's default model first, when the key sees it.
+      setName(list.models.includes(KERA_DEFAULT_MODEL) ? KERA_DEFAULT_MODEL : (list.models[0] ?? list.hidden[0] ?? ''));
     } catch (error) {
       setProblem(listProblem(error, local));
       // A cloud provider that cannot list models can still take a typed name.
@@ -383,7 +367,6 @@ const TIPS: Array<{ title: MessageKey; body: MessageKey }> = [
 ];
 
 function TipsStep() {
-  const settings = useStorage(settingsStorage, DEFAULT_SETTINGS);
   return (
     <>
       <p>{t('tips.intro')}</p>
@@ -398,15 +381,6 @@ function TipsStep() {
       {/* Its own button: Open the panel uses its click to open the side panel. Skipping it is fine. */}
       <SettingsCard>
         <BrowserFeaturesRow />
-      </SettingsCard>
-      <SettingsCard>
-        <SettingsRow label={t('welcome.help')} description={t('welcome.helpHint')}>
-          <Switch
-            aria-label={t('welcome.help')}
-            checked={settings.analyticsStats}
-            onChange={on => void settingsStorage.set(s => ({ ...s, analyticsStats: on }))}
-          />
-        </SettingsRow>
       </SettingsCard>
     </>
   );
