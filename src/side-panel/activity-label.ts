@@ -44,6 +44,7 @@ const LABELS: Record<string, MessageKey> = {
   upload: 'act.upload',
   read_attachment: 'act.readAttachment',
   save_file: 'act.saveFile',
+  run_javascript: 'act.script',
 };
 
 const ALLOWED: Record<string, MessageKey> = {

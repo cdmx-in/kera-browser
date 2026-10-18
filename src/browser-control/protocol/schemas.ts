@@ -154,6 +154,15 @@ export const TabsArgsSchema = z.strictObject({
   tabId: z.number().int().optional(),
 });
 
+export const RunJavascriptArgsSchema = z.strictObject({
+  ...actionCommon,
+  code: z
+    .string()
+    .min(1)
+    .max(20_000)
+    .describe("JavaScript evaluated as an expression in the page's main frame; a returned promise is awaited"),
+});
+
 export const HandleDialogArgsSchema = z.strictObject({
   ...actionCommon,
   accept: z.boolean(),
@@ -209,6 +218,7 @@ export type WaitArgs = z.infer<typeof WaitArgsSchema>;
 export type NavigateArgs = z.infer<typeof NavigateArgsSchema>;
 export type TabsArgs = z.infer<typeof TabsArgsSchema>;
 export type HandleDialogArgs = z.infer<typeof HandleDialogArgsSchema>;
+export type RunJavascriptArgs = z.infer<typeof RunJavascriptArgsSchema>;
 export type UploadArgs = z.infer<typeof UploadArgsSchema>;
 export type AskUserArgs = z.infer<typeof AskUserArgsSchema>;
 

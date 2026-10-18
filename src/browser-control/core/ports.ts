@@ -146,7 +146,7 @@ export interface ConfirmRequest {
 
 /** A write the gate classified, put to the host's policy. */
 export interface WriteQuestion {
-  category: 'submit' | 'delete' | 'upload';
+  category: 'submit' | 'delete' | 'upload' | 'script';
   site: string;
   tabId: number;
 }

@@ -197,6 +197,7 @@ const SMALL_MODEL_OFF = [
   'tabs',
   'ask_user',
   'upload',
+  'run_javascript',
 ];
 
 function longRun(

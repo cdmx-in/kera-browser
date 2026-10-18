@@ -7,6 +7,7 @@ import {
   FillFormArgsSchema,
   FindArgsSchema,
   HandleDialogArgsSchema,
+  RunJavascriptArgsSchema,
   UploadArgsSchema,
   HoverArgsSchema,
   NavigateArgsSchema,
@@ -151,6 +152,15 @@ export const TOOL_SPECS: ToolSpec[] = [
     args: TabsArgsSchema,
     readOnly: args => args.action === 'list' || args.action === 'select',
     capability: 'core',
+    available: true,
+  },
+  {
+    name: 'run_javascript',
+    description:
+      "Run JavaScript in the page's main frame and return the value of the expression as JSON (a promise is awaited). For what the other tools cannot do; the user may be asked to allow each script.",
+    args: RunJavascriptArgsSchema,
+    readOnly: false,
+    capability: 'eval',
     available: true,
   },
   {

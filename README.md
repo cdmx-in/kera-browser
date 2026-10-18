@@ -26,6 +26,7 @@ pnpm build && pnpm zip                    # dist-zip/kera-browser-<version>.zip 
 
 - `src/llm/kera.ts`: Kera's address and default model. `kera` is a provider kind with a fixed base URL (`src/llm/providers.ts`), and the catalogue knows Kera's `gpt-oss` runs with a 16k context.
 - `src/options/ProvidersSection.tsx`: `ENABLED_KINDS = ['kera']` is the only switch; the other kinds' code stays so upstream rebases cleanly.
+- A `run_javascript` tool (upstream reserved the `eval` capability but ships no tool): the agent can evaluate JavaScript in the page when the page's controls cannot do the job. Outside Auto mode every script waits for your approval on a card that shows the code, and a site's "Allow" rule does not cover scripts.
 - No analytics switches, no uninstall survey, no rating card. `PRIVACY.md` says what leaves the browser.
 - Branding: name, icon, colours (`src/ui/index.css`), shortcut `Alt+Shift+K`.
 

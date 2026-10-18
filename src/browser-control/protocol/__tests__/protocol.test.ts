@@ -46,6 +46,14 @@ describe('catalogue', () => {
     expect(listTools(new Set(['human'])).includes(human)).toBe(human.available);
   });
 
+  it('offers run_javascript behind the eval capability, as a write that needs code', () => {
+    const spec = toolSpec('run_javascript')!;
+    expect(spec.capability).toBe('eval');
+    expect(isReadOnly(spec, { code: '1' })).toBe(false);
+    expect(spec.args.safeParse({ code: 'document.title' }).success).toBe(true);
+    expect(spec.args.safeParse({}).success).toBe(false);
+  });
+
   it('marks tabs read-only only for list and select', () => {
     const tabs = toolSpec('tabs')!;
     expect(isReadOnly(tabs, { action: 'list' })).toBe(true);

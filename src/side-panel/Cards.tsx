@@ -76,6 +76,7 @@ const WRITE_TITLES: Record<string, MessageKey> = {
   submit: 'card.write.title.submit',
   delete: 'card.write.title.delete',
   upload: 'card.write.title.upload',
+  script: 'card.write.title.script',
 };
 
 function WriteCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unknown) => void }) {

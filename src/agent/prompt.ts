@@ -71,6 +71,10 @@ function toolGuide(tools: string[]): string {
     lines.push('- find locates elements by role, name or text in the latest observation, without a full outline.');
   if (has('read')) lines.push('- read returns a page or an element as Markdown, for reading text.');
   if (has('fill_form')) lines.push('- fill_form sets several fields in order and can activate a submit control.');
+  if (has('run_javascript'))
+    lines.push(
+      "- run_javascript evaluates JavaScript in the page and returns its value as JSON. Use it only when the page's own controls cannot do the job (a value the outline does not show, a control without an accessible name, data in a table too large to read). Never use it to read cookies, tokens, storage or passwords, to send requests to other sites, or to get around a declined action. Outside Auto mode the user allows each script.",
+    );
   if (has('ask_user'))
     lines.push(
       '- ask_user asks the user a question (kind "input") or hands them a step (kind "takeover"). For a takeover, the message says only what the user should do now, in a short plain sentence, e.g. "Sign in to GitHub in this tab, then press Done." Do not repeat the task or say what you will do after.',

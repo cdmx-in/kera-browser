@@ -9,6 +9,7 @@ import { handleDialog } from './dialog';
 import { askUser } from './ask';
 import { fillForm } from './fill';
 import { upload } from './upload';
+import { runJavascript } from './run-javascript';
 
 /** Tool name to handler. Arguments arrive validated against the catalogue's schema. */
 export const TOOL_HANDLERS: Record<string, ToolHandler> = {
@@ -29,4 +30,5 @@ export const TOOL_HANDLERS: Record<string, ToolHandler> = {
   ask_user: (ctx, args) => askUser(ctx, args as never),
   fill_form: (ctx, args) => fillForm(ctx, args as never),
   upload: (ctx, args) => upload(ctx, args as never),
+  run_javascript: (ctx, args) => runJavascript(ctx, args as never),
 };

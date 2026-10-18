@@ -19,7 +19,8 @@ export interface PageState {
   diff?: { since: number; ops: Array<number | { add: string } | { remove: string }> };
 }
 
-export type Mechanism = 'pointer' | 'keyboard' | 'insert-text' | 'set-value' | 'select-option' | 'file-input';
+export type Mechanism =
+  'pointer' | 'keyboard' | 'insert-text' | 'set-value' | 'select-option' | 'file-input' | 'script';
 export type SensitiveCategory = 'submit' | 'pay' | 'delete' | 'grant' | 'upload' | 'script';
 
 export interface ActionReceipt {

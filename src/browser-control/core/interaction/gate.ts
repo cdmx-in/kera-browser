@@ -31,8 +31,10 @@ export interface GateInput {
   intent?: string;
   /** The action puts text or an option into the element: into a secret field that is the user's step. */
   textInput?: boolean;
-  /** A category fixed by the tool rather than classified: `upload` is always a write. */
+  /** A category fixed by the tool rather than classified: `upload` is always a write, `script` too. */
   category?: SensitiveCategory;
+  /** Why, for a fixed category; `upload` has its own. */
+  reason?: string;
 }
 
 export interface GateResult {
@@ -168,7 +170,7 @@ export async function confirmGate(ctx: ToolContext, input: GateInput): Promise<G
   let basis: string | undefined;
   if (input.category) {
     category = input.category;
-    reason = 'an upload sends a file to the site';
+    reason = input.reason ?? 'an upload sends a file to the site';
   } else if (input.mode !== 'none') {
     const result = await classifyOn(ctx, { ...input, mode: input.mode });
     category = result.category ?? undefined;
@@ -200,12 +202,18 @@ export async function confirmGate(ctx: ToolContext, input: GateInput): Promise<G
   // A host write policy decides classified writes; otherwise the session's fixed confirmation policy does, as in the
   // test panel.
   let canRemember = category === 'submit';
-  if (session.decideWrite && (category === 'submit' || category === 'delete' || category === 'upload')) {
+  if (
+    session.decideWrite &&
+    (category === 'submit' || category === 'delete' || category === 'upload' || category === 'script')
+  ) {
     const decision = await session.decideWrite({ category, site, tabId: ctx.tab().tabId });
-    if (decision.decision === 'run') {
+    // A script has the page's full access: only Auto mode runs it unasked, a site's Allow rule does not cover it,
+    // and its card never offers "Allow on this site".
+    const covered = decision.decision === 'run' && (category !== 'script' || decision.by === 'auto');
+    if (covered) {
       return { category, confirmedByUser: false, prompted: false, reason, basis, allowedBy: decision.by ?? 'auto' };
     }
-    canRemember = decision.canRemember;
+    canRemember = category === 'script' ? false : decision.canRemember;
   } else {
     const needed = policy === 'always' || (policy === 'sensitive' && category !== undefined);
     if (!needed) return { category, confirmedByUser: false, prompted: false, reason, basis };

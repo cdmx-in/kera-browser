@@ -1,5 +1,6 @@
 // The agent's tools: the layer's catalogue as it is, plus the agent's own. One list for every model; `screenshot` is
-// offered to vision models only, and page script, devtools and uploads from a path are not in the list at all.
+// offered to vision models only, and devtools and uploads from a path are not in the list at all. run_javascript is
+// offered: the gate asks the user for each script outside Auto mode.
 import { argsJsonSchema, isReadOnly, TOOL_SPECS } from '@src/browser-control';
 import type { ToolDefinition } from '@src/llm';
 import { READ_ATTACHMENT_TOOL } from './attachments';
@@ -17,8 +18,8 @@ export interface AgentTool extends ToolDefinition {
   required?: boolean;
 }
 
-/** Tools of the layer the agent never gets: page script, devtools, coordinates and selectors. */
-const NOT_OFFERED = new Set(['eval', 'devtools']);
+/** Tools of the layer the agent never gets: devtools, coordinates and selectors. */
+const NOT_OFFERED = new Set(['devtools']);
 
 const GROUPS: Record<string, AgentTool['group']> = {
   snapshot: 'reading',
@@ -36,6 +37,7 @@ const GROUPS: Record<string, AgentTool['group']> = {
   hover: 'acting',
   scroll: 'acting',
   tabs: 'acting',
+  run_javascript: 'acting',
   ask_user: 'working',
   upload: 'files',
 };
@@ -153,4 +155,5 @@ export const PAGE_ACTIONS = new Set([
   'navigate',
   'handle_dialog',
   'upload',
+  'run_javascript',
 ]);

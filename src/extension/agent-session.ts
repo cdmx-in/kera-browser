@@ -13,7 +13,8 @@ export const ASK_TIMEOUT_MS = 15 * 60_000;
 
 export function createAgentSession(controller: Controller, config: SessionConfig = {}): Session {
   return controller.createSession({
-    capabilities: ['human', 'files'],
+    // `eval` is run_javascript: a write the user allows per script outside Auto mode.
+    capabilities: ['human', 'files', 'eval'],
     // Files come from chat attachments only, never a path on the user's disk.
     uploadSources: ['attachments'],
     handover: true,
