@@ -6,7 +6,7 @@ A fork of [Nanobrowser](https://github.com/nanobrowser/nanobrowser) (Apache-2.0)
 
 ## Install (team)
 
-1. Install from the Chrome Web Store link shared in the team channel (the listing is unlisted), or load a release zip unpacked at `chrome://extensions`.
+1. Install from the Chrome Web Store link shared in the team channel (the listing is unlisted), or load a release zip unpacked: download `kera-browser-<version>.zip` from the [latest release](https://github.com/cdmx-in/kera-browser/releases/latest) and unzip it into a folder you keep; open `chrome://extensions`, turn on Developer mode (top right); click Load unpacked and pick that folder.
 2. In Kera: Settings → Account → API keys → Create. Copy the key.
 3. The welcome page asks for that key: paste it, Connect, pick `gpt-6-luna` (or `gpt-oss:20b` for work that must stay on CodeMax's GPU), Use.
 4. `Alt+Shift+K` opens the panel on any tab.
