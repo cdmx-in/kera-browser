@@ -4,7 +4,7 @@
 // sent at most once; nothing here retries.
 import { LayerError } from '../../protocol/errors';
 import type { GuardReport } from '../../probe';
-import type { ToolContext } from '../controller';
+import type { PointerKind, ToolContext } from '../controller';
 import type { CdpPort, FrameRecord } from '../ports';
 import type { Point } from '../geometry';
 import { assertAsShown } from './resolve';
@@ -215,6 +215,7 @@ export async function dispatchClick(
   options: ClickOptions,
 ): Promise<PointerOutcome> {
   const { cdp } = await ctx.attach();
+  showPointer(ctx, point, 'click');
   const tab = ctx.tab();
   const ancestors = await armGuards(ctx, target);
   const dialog = watchDialog(cdp);
@@ -295,8 +296,19 @@ export async function dispatchClick(
   return { dispatched, reachedTarget: guards.own.verdict === 'passed', guard: guards.own };
 }
 
+/** Tells the host where the pointer goes, for the extension's cursor; never waits and never fails the call. */
+function showPointer(ctx: ToolContext, point: Point, kind: PointerKind): void {
+  if (ctx.tabId === null) return;
+  try {
+    ctx.controller.host.pointer?.(ctx.tabId, point, kind);
+  } catch {
+    // the cursor is decoration: the action goes ahead without it
+  }
+}
+
 export async function dispatchHover(ctx: ToolContext, point: Point): Promise<PointerOutcome> {
   const { cdp } = await ctx.attach();
+  showPointer(ctx, point, 'hover');
   ctx.tab().actionSeq++;
   await cdp.send(undefined, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
   return { dispatched: true };
@@ -309,6 +321,7 @@ export async function dispatchWheel(
   deltaY: number,
 ): Promise<PointerOutcome> {
   const { cdp } = await ctx.attach();
+  showPointer(ctx, point, 'scroll');
   ctx.tab().actionSeq++;
   await cdp.send(undefined, 'Input.dispatchMouseEvent', { type: 'mouseWheel', x: point.x, y: point.y, deltaX, deltaY });
   return { dispatched: true };

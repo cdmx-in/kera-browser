@@ -72,10 +72,17 @@ export function ModeMenu({
         data-label={label}
         data-value={mode}
         title={title}
-        className={`flex items-center gap-1 whitespace-nowrap rounded-full border font-medium ${large ? 'py-1.5 pl-3.5 pr-2.5 text-sm' : 'py-1 pl-2.5 pr-1.5 text-xs'} focus:outline-none focus-visible:ring-2 focus-visible:ring-nb-accent/40 ${mode === 'auto' ? 'border-nb-auto/60 bg-nb-auto/10 text-nb-auto' : 'border-nb-border bg-nb-bg text-nb-fg'}`}
+        className={
+          large
+            ? `nb-trigger ${mode === 'auto' ? 'border-nb-auto/60 bg-nb-auto/10 text-nb-auto hover:border-nb-auto hover:bg-nb-auto/10' : ''}`
+            : `flex items-center gap-1 whitespace-nowrap rounded-full border py-1 pl-2.5 pr-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-nb-accent/40 ${mode === 'auto' ? 'border-nb-auto/60 bg-nb-auto/10 text-nb-auto hover:border-nb-auto' : 'border-nb-border bg-nb-bg text-nb-fg hover:border-nb-accent/50'}`
+        }
         onClick={() => setOpen(o => !o)}>
         {t(current.name)}
-        <ChevronIcon size={large ? 14 : 12} className={`transition-transform ${open ? '-rotate-90' : 'rotate-90'}`} />
+        <ChevronIcon
+          size={large ? 16 : 12}
+          className={`transition-transform ${mode === 'auto' ? '' : 'text-nb-accent dark:text-nb-sky'} ${open ? '-rotate-90' : 'rotate-90'}`}
+        />
       </button>
       {open ? (
         <div
@@ -95,7 +102,7 @@ export function ModeMenu({
               items[(at + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus();
             }
           }}
-          className={`absolute z-10 flex flex-col rounded-xl border border-nb-border bg-nb-bg p-1 shadow-pop ${large ? 'left-0 top-full mt-1 w-64 text-sm sm:left-auto sm:right-0' : 'bottom-9 left-0 w-56 text-xs'}`}>
+          className={`nb-menu absolute z-10 ${large ? 'left-0 top-full mt-1 w-64 text-sm sm:left-auto sm:right-0' : 'bottom-9 left-0 w-56 text-xs'}`}>
           {MODES.map(m => (
             <button
               key={m.mode}
@@ -103,7 +110,7 @@ export function ModeMenu({
               role="menuitemradio"
               aria-checked={m.mode === mode}
               data-value={m.mode}
-              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left hover:bg-nb-surface focus-visible:bg-nb-surface focus-visible:outline-none"
+              className="nb-menu-item"
               onClick={() => {
                 close();
                 if (m.mode !== mode) onMode(m.mode);

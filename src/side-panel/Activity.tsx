@@ -1,7 +1,8 @@
 // The activity block: a status line for the run, "Thinking…", "Working…" or "Waiting for you…" with the time so far
-// while it works, then "Worked for 12s", which opens one row per tool call in plain language, with its status, the
-// effect when the page did not react, how a write was allowed, and on expanding, the arguments (typed values masked),
-// the receipt and the error hint. Page strings are text nodes only.
+// while it works, then "Worked for 12s". Under it, one row per tool call in plain language, open while the run works
+// so each step shows as it happens, and folded once it is done: with its status, the effect when the page did not
+// react, how a write was allowed, and on expanding, the arguments (typed values masked), the receipt and the error
+// hint. Page strings are text nodes only.
 import { useEffect, useState } from 'react';
 import type { ToolRow } from '@src/ui/protocol';
 import { t } from '@src/ui/i18n';
@@ -67,7 +68,10 @@ function useNow(live: boolean): number {
  * "Worked for" once it has stopped.
  */
 export function Activity({ rows, phase, start, end }: { rows: ToolRow[]; phase?: Phase; start: number; end?: number }) {
-  const [open, setOpen] = useState(false);
+  // Open while the run works, so each step shows as it happens, and folded once it is done; a click decides from then on.
+  const [toggled, setToggled] = useState<boolean | null>(null);
+  const open = toggled ?? !!phase;
+  const setOpen = (next: (o: boolean) => boolean) => setToggled(next(open));
   const now = useNow(!!phase);
   const time = elapsed((phase ? now : (end ?? start)) - start);
   const status = phase ? (

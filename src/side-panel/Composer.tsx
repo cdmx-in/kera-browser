@@ -99,7 +99,7 @@ function Launcher({
       id="nb-launcher"
       role="listbox"
       aria-label={t('launcher.label')}
-      className="flex max-h-60 flex-col overflow-y-auto rounded-xl border border-nb-border bg-nb-bg p-1 text-xs shadow-pop">
+      className="nb-menu max-h-60 overflow-y-auto text-xs">
       {items.length === 0 ? <li className="px-3 py-1.5 text-nb-muted">{t('launcher.none')}</li> : null}
       {items.map((item, i) => (
         // The input keeps focus and handles the keys (aria-activedescendant); a click picks too.
@@ -109,7 +109,7 @@ function Launcher({
           id={`nb-launcher-${i}`}
           role="option"
           aria-selected={i === selected}
-          className={`flex cursor-pointer items-baseline gap-2 rounded-lg px-3 py-1.5 ${i === selected ? 'bg-nb-surface' : ''}`}
+          className="nb-menu-item cursor-pointer items-baseline"
           onMouseDown={e => e.preventDefault()}
           onClick={() => onPick(item)}>
           {item.kind === 'shortcut' ? (
@@ -550,11 +550,11 @@ export function Composer({
                       e.stopPropagation();
                       setMenu(false);
                     }}
-                    className="absolute bottom-9 left-0 z-10 flex w-52 flex-col rounded-xl border border-nb-border bg-nb-bg p-1 text-xs shadow-pop">
+                    className="nb-menu absolute bottom-9 left-0 z-10 w-52 text-xs">
                     <button
                       type="button"
                       role="menuitem"
-                      className="rounded-lg px-3 py-1.5 text-left hover:bg-nb-surface focus-visible:bg-nb-surface focus-visible:outline-none"
+                      className="nb-menu-item"
                       onClick={() => {
                         setMenu(false);
                         picker.current?.click();
@@ -565,7 +565,7 @@ export function Composer({
                       <button
                         type="button"
                         role="menuitem"
-                        className="rounded-lg px-3 py-1.5 text-left hover:bg-nb-surface focus-visible:bg-nb-surface focus-visible:outline-none"
+                        className="nb-menu-item"
                         onClick={() => {
                           setMenu(false);
                           onScreenshot();

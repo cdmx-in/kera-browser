@@ -2,12 +2,12 @@
 import { Controller } from './core/controller';
 import { chromeEpochStore, chromeTabHost } from './host/chrome-host';
 import { chromeAttacher } from './host/connection';
-import type { UserPrompt } from './core/ports';
+import type { ControllerHost } from './core/controller';
 
 export * from './protocol';
 export type * from './core/ports';
 export { Controller, Session } from './core/controller';
-export type { AuditEntry, ControllerHost, SessionConfig } from './core/controller';
+export type { AuditEntry, ControllerHost, PointerKind, SessionConfig } from './core/controller';
 export { TabLocks } from './core/lock';
 export { applyDiff } from './core/perception/diff';
 export { classify, enterSubmits } from './core/interaction/classify';
@@ -29,11 +29,12 @@ export { PuppeteerFrameTopology, listFrames, readFrameTree, checkFrameAccessors 
 export type { FrameInfo, AccessorCheck } from './host/frame-topology';
 
 /** The controller wired to Chrome: chrome.debugger through Puppeteer, chrome.tabs, chrome.storage. */
-export function createChromeController(options: { prompt?: UserPrompt } = {}): Promise<Controller> {
+export function createChromeController(options: Pick<ControllerHost, 'prompt' | 'pointer'> = {}): Promise<Controller> {
   return Controller.create({
     attacher: chromeAttacher,
     tabs: chromeTabHost,
     epochStore: chromeEpochStore,
     prompt: options.prompt,
+    pointer: options.pointer,
   });
 }

@@ -58,10 +58,7 @@ export function TabPicker({
       (!q || `${tab.title} ${tab.url}`.toLowerCase().includes(q)),
   );
   return (
-    <div
-      role="listbox"
-      aria-label={t('tabs.pick')}
-      className="max-h-48 overflow-y-auto rounded-xl border border-nb-border bg-nb-bg p-1 text-xs shadow-pop">
+    <div role="listbox" aria-label={t('tabs.pick')} className="nb-menu max-h-48 overflow-y-auto text-xs">
       {shown.length === 0 ? <p className="p-2 text-nb-muted">{t('tabs.none')}</p> : null}
       {shown.map(tab => (
         <button
@@ -70,7 +67,7 @@ export function TabPicker({
           role="option"
           aria-selected={false}
           aria-label={`${plain(tab.title)} ${plain(new URL(tab.url!).host)}`}
-          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-nb-surface"
+          className="nb-menu-item w-full px-2"
           onClick={() => onPick({ tabId: tab.id!, title: tab.title ?? '' })}>
           <span className="truncate">{plain(tab.title)}</span>
           <span className="truncate text-nb-muted">{plain(new URL(tab.url!).host)}</span>

@@ -14,6 +14,7 @@ import type { ConfirmPolicy } from './interaction/gate';
 import { KnownSet, RefRegistry, reserveEpoch } from './refs';
 import type { Epoch } from './refs';
 import type { CaptureState } from './perception/capture';
+import type { Point } from './geometry';
 import type { Observation } from './perception/observe';
 import { NavigationGuard } from './navigation-guard';
 import { ProbeClient } from './probe-client';
@@ -32,7 +33,16 @@ export interface ControllerHost {
   epochStore: EpochStore;
   /** The person: the side panel, or scripted answers in tests. Without it, sensitive actions fail with NEEDS_USER. */
   prompt?: UserPrompt;
+  /**
+   * Where the pointer is about to go in a tab's viewport (CSS pixels), told just before a click, hover or wheel is
+   * dispatched, so the extension can draw its cursor there. Not awaited, and a throw is ignored: it never delays or
+   * fails an action.
+   */
+  pointer?: (tabId: number, point: Point, kind: PointerKind) => void;
 }
+
+/** What the pointer does at the point it is moved to. */
+export type PointerKind = 'click' | 'hover' | 'scroll';
 
 export interface SessionConfig {
   capabilities?: Capability[];

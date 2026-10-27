@@ -61,6 +61,58 @@ h3 {
   @apply tracking-tight;
 }
 
+/*
+ * Dropdowns. `.nb-select` is the closed native select: 36 px high, 12 px corners, the native arrow replaced by a teal
+ * chevron, a teal ring on keyboard focus. The browser still draws the list of options, in the page's colour scheme.
+ * `.nb-trigger` gives a button that opens a custom menu the same look; `.nb-menu` and `.nb-menu-item` are that menu's
+ * panel and rows, with the chosen row and the row under the pointer tinted teal.
+ */
+@layer components {
+  .nb-select,
+  .nb-trigger {
+    @apply h-9 max-w-full rounded-xl border border-nb-border bg-nb-bg text-sm font-medium text-nb-fg shadow-sm transition-colors;
+    @apply hover:border-nb-accent/50 hover:bg-nb-surface/60;
+    @apply focus:outline-none focus-visible:border-nb-accent focus-visible:ring-2 focus-visible:ring-nb-accent/30;
+    @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-nb-border disabled:hover:bg-nb-bg;
+  }
+  /* In dark the control sits a step above the card, so it reads as a field. `:where` keeps this as weak as the rule
+     above, so a colour a call site adds (the Auto mode's) still wins. */
+  :where(.dark) .nb-select,
+  :where(.dark) .nb-trigger {
+    @apply bg-nb-surface/60 hover:bg-nb-surface disabled:hover:bg-nb-surface/60;
+  }
+  .nb-trigger[aria-expanded='true'] {
+    @apply border-nb-accent ring-2 ring-nb-accent/20;
+  }
+  .nb-select {
+    @apply cursor-pointer appearance-none pl-3 pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231E7F8C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+  }
+  .dark .nb-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233DAFC4' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  }
+  .nb-select option {
+    @apply bg-nb-bg font-normal text-nb-fg;
+  }
+  .nb-trigger {
+    @apply inline-flex items-center gap-2 whitespace-nowrap pl-3 pr-2.5;
+  }
+  .nb-menu {
+    @apply flex flex-col rounded-xl border border-nb-border bg-nb-bg p-1 shadow-pop;
+  }
+  .nb-menu-item {
+    @apply flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-nb-fg transition-colors;
+    @apply hover:bg-nb-accent/10 focus-visible:bg-nb-accent/10 focus-visible:outline-none;
+  }
+  .nb-menu-item[aria-checked='true'],
+  .nb-menu-item[aria-selected='true'] {
+    @apply bg-nb-accent/15 font-medium;
+  }
+}
+
 ::selection {
   @apply bg-nb-sky/30;
 }

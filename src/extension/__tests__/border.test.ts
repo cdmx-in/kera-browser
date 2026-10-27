@@ -7,6 +7,7 @@ import { screenshotTab } from '../agent-session';
 /** Two conversations: a with tabs 1 and 2, b with tab 3. */
 function setup(options: { enabled?: boolean; hide?: () => Promise<void> } = {}) {
   const sent: Array<[number, BorderState, string?]> = [];
+  const points: Array<[number, number, number, string]> = [];
   const owner: Record<number, string> = { 1: 'a', 2: 'a', 3: 'b' };
   let enabled = options.enabled ?? true;
   const border = new PageBorder({
@@ -21,13 +22,35 @@ function setup(options: { enabled?: boolean; hide?: () => Promise<void> } = {}) 
       sent.push(documentId ? [tabId, state, documentId] : [tabId, state]);
       if (state === 'hidden' && options.hide) await options.hide();
     },
+    point: async (tabId, x, y, kind) => {
+      points.push([tabId, x, y, kind]);
+    },
   });
-  return { border, sent, owner, setEnabled: (on: boolean) => (enabled = on) };
+  return { border, sent, points, owner, setEnabled: (on: boolean) => (enabled = on) };
 }
 
 afterEach(() => vi.useRealTimers());
 
 describe('PageBorder', () => {
+  it('moves the cursor only on the pages of a working run, and not while a screenshot fades the border out', async () => {
+    let fade!: () => void;
+    const { border, points } = setup({ hide: () => new Promise<void>(resolve => (fade = resolve)) });
+    await border.pointer(1, { x: 10, y: 20 }, 'click');
+    expect(points).toEqual([]);
+    await border.status('a', 'running');
+    await border.pointer(1, { x: 10, y: 20 }, 'click');
+    await border.pointer(3, { x: 5, y: 5 }, 'hover');
+    expect(points).toEqual([[1, 10, 20, 'click']]);
+    const shot = border.around(1, async () => {
+      await border.pointer(1, { x: 30, y: 40 }, 'scroll');
+      return 'png';
+    });
+    await vi.waitFor(() => expect(fade).toBeTypeOf('function'));
+    fade();
+    await expect(shot).resolves.toBe('png');
+    expect(points).toEqual([[1, 10, 20, 'click']]);
+  });
+
   it('draws the border on every tab of a working run, and removes it when the run stops working', async () => {
     const { border, sent } = setup();
     await border.status('a', 'running');

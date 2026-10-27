@@ -234,10 +234,13 @@ function ChoiceMenu({
         aria-expanded={open}
         data-label={label}
         data-value={current.value}
-        className="flex items-center gap-2 rounded-lg border border-nb-border bg-nb-bg py-1.5 pl-2.5 pr-2 text-sm focus:border-nb-accent focus:outline-none focus:ring-2 focus:ring-nb-accent/25"
+        className="nb-trigger"
         onClick={() => setOpen(o => !o)}>
         {current.label}
-        <ChevronIcon size={14} className={`transition-transform ${open ? '-rotate-90' : 'rotate-90'}`} />
+        <ChevronIcon
+          size={16}
+          className={`text-nb-accent transition-transform dark:text-nb-sky ${open ? '-rotate-90' : 'rotate-90'}`}
+        />
       </button>
       {open ? (
         <div
@@ -258,7 +261,7 @@ function ChoiceMenu({
               items[(at + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus();
             }
           }}
-          className={`absolute left-0 z-10 flex w-56 flex-col rounded-xl border border-nb-border bg-nb-bg p-1 text-sm shadow-pop ${above ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+          className={`nb-menu absolute left-0 z-10 w-56 text-sm ${above ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           {choices.map(c => (
             <button
               key={c.value}
@@ -266,7 +269,7 @@ function ChoiceMenu({
               role="menuitemradio"
               aria-checked={c.value === value}
               data-value={c.value}
-              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left hover:bg-nb-surface focus-visible:bg-nb-surface focus-visible:outline-none"
+              className="nb-menu-item"
               onClick={() => {
                 close();
                 onChoose(c.value);

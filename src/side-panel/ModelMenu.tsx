@@ -100,7 +100,10 @@ export function ModelMenu({
         {showEffort && row ? (
           <span className="shrink-0 whitespace-nowrap max-[340px]:hidden">· {t(`reasoning.${row.shown}`)}</span>
         ) : null}
-        <ChevronIcon size={12} className={`shrink-0 transition-transform ${open ? '-rotate-90' : 'rotate-90'}`} />
+        <ChevronIcon
+          size={12}
+          className={`shrink-0 text-nb-accent transition-transform dark:text-nb-sky ${open ? '-rotate-90' : 'rotate-90'}`}
+        />
       </button>
       {open ? (
         <div
@@ -132,7 +135,7 @@ export function ModelMenu({
               items[(at + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus();
             }
           }}
-          className="absolute bottom-11 left-2 z-10 flex w-64 max-w-[calc(100%-1rem)] flex-col rounded-xl border border-nb-border bg-nb-bg p-1 text-xs shadow-pop">
+          className="nb-menu absolute bottom-11 left-2 z-10 w-64 max-w-[calc(100%-1rem)] text-xs">
           <div className="flex max-h-60 flex-col overflow-y-auto">
             {models.map(m => (
               <button
@@ -143,12 +146,12 @@ export function ModelMenu({
                 // One Tab stop for the list, so Tab goes on to the effort row; the arrow keys move within it.
                 tabIndex={sameRef(model, m.ref) || (!chosen && m === models[0]) ? 0 : -1}
                 data-value={valueOf(m.ref)}
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left hover:bg-nb-surface focus-visible:bg-nb-surface focus-visible:outline-none"
+                className="nb-menu-item"
                 onClick={() => {
                   close();
                   if (!sameRef(model, m.ref)) onModel(m.ref);
                 }}>
-                <span className="min-w-0 flex-1 truncate text-nb-fg">{m.label}</span>
+                <span className="min-w-0 flex-1 truncate">{m.label}</span>
                 <CheckIcon size={14} className={sameRef(model, m.ref) ? 'text-nb-accent' : 'invisible'} />
               </button>
             ))}

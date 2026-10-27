@@ -45,8 +45,8 @@ import { EMPTY_GUARDS, UNFINISHED, ZERO_USAGE, addUsage } from '@src/store/types
 import type { AttachmentRef, PanelCommand, PanelEventBody } from '@src/ui/protocol';
 import { createAgentSession, layerPort } from './agent-session';
 import { TabScope } from './bindings';
-import { PageBorder, injectBorder, listenForBorder } from './border';
-import { addPromptRoute, controllerReady } from './layer';
+import { PageBorder, injectBorder, injectPointer, listenForBorder } from './border';
+import { addPromptRoute, controllerReady, setPointerRoute } from './layer';
 import { Permissions } from './permissions';
 import { PromptBroker } from './prompt-broker';
 import { notifyFinished, notifyNeeds } from './notify';
@@ -118,8 +118,10 @@ export class RunManager {
       scopedTabs: () => this.scope.scopedTabs(),
       enabled: async () => ((await settingsStorage.get()) ?? DEFAULT_SETTINGS).pageBorder,
       inject: injectBorder,
+      point: injectPointer,
     });
     listenForBorder(this.border);
+    setPointerRoute((tabId, point, kind) => void this.border.pointer(tabId, point, kind).catch(() => undefined));
     // A worker that stopped during a run leaves its pages with a border, and the extension id they check is still
     // there: no run works at worker start, so every scoped tab loses it.
     void this.border.start().catch(() => undefined);

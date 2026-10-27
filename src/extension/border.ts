@@ -2,6 +2,9 @@
 // acts. The worker puts one small function into the top frame of those pages; it draws an element the layer does not
 // see (on <html>, no pointer events, hidden from accessibility, its content in a closed shadow root). The border goes
 // away when the run stops working, fades out for the model's screenshots, and can be turned off in Settings.
+// The agent's cursor lives in the same element: a teal pointer that glides to each point the agent clicks, hovers or
+// scrolls at, with a ripple on a click, so the user can follow what it does. It comes and goes with the border.
+import type { PointerKind } from '@src/browser-control';
 import { settingsStorage } from '@src/store/settings';
 import type { RunStatus } from '@src/store/types';
 
@@ -18,6 +21,8 @@ export interface BorderPorts {
   enabled(): Promise<boolean>;
   /** Runs `setBorder(state)` in the tab's top frame, or in one document of it; resolves when it has. */
   inject(tabId: number, state: BorderState, documentId?: string): Promise<void>;
+  /** Runs `movePointer(x, y, kind)` in the tab's top frame. */
+  point(tabId: number, x: number, y: number, kind: PointerKind): Promise<void>;
 }
 
 /** How long a screenshot waits for the border to fade out; past it, the capture goes ahead. */
@@ -54,6 +59,15 @@ export class PageBorder {
   /** A new document committed in a tab's top frame (a back-forward cache restore included). */
   async committed(tabId: number, documentId?: string): Promise<void> {
     if (await this.#wanted(tabId)) this.#send(tabId, this.#capturing.get(tabId) ? 'hidden' : 'on', documentId);
+  }
+
+  /**
+   * The agent's pointer is about to act at a point of a tab (viewport CSS pixels): the cursor glides there. Only on a
+   * page that shows the border, and not while a screenshot has faded it out. Never waits on the page.
+   */
+  async pointer(tabId: number, point: { x: number; y: number }, kind: PointerKind): Promise<void> {
+    if (this.#capturing.get(tabId) || !(await this.#wanted(tabId))) return;
+    void this.ports.point(tabId, point.x, point.y, kind).catch(() => undefined);
   }
 
   /** The Settings switch changed. */
@@ -117,7 +131,13 @@ export class PageBorder {
  */
 export function setBorder(state: BorderState): Promise<void> | void {
   const KEY = '__nanobrowserBorder';
-  type Border = { host: HTMLElement; glow: HTMLElement; timer: ReturnType<typeof setInterval>; onHide: () => void };
+  type Border = {
+    host: HTMLElement;
+    glow: HTMLElement;
+    cursor: HTMLElement;
+    timer: ReturnType<typeof setInterval>;
+    onHide: () => void;
+  };
   const g = globalThis as unknown as Record<string, Border | undefined>;
   const remove = () => {
     const b = g[KEY];
@@ -152,7 +172,22 @@ export function setBorder(state: BorderState): Promise<void> | void {
       .b { bottom: 0; mask-image: linear-gradient(to top, #000, transparent); }
       .l { left: 0; mask-image: linear-gradient(to right, #000, transparent); }
       .r { right: 0; mask-image: linear-gradient(to left, #000, transparent); }
-    </style><div class="glow"><div class="pulse"><div class="edge t"></div><div class="edge b"></div><div class="edge l"></div><div class="edge r"></div></div></div>`;
+      .cursor { position: absolute; left: 0; top: 0; opacity: 0; will-change: transform;
+        transform: translate(var(--x, 50vw), var(--y, 50vh));
+        transition: transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease; }
+      .cursor.on { opacity: 1; }
+      .cursor svg { position: absolute; left: -3.75px; top: -2.5px; width: 30px; height: 30px;
+        filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35)); }
+      .tag { position: absolute; left: 20px; top: 24px; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+        background: #1e7f8c; color: #fff; font: 600 12px/18px system-ui, sans-serif; letter-spacing: 0.02em;
+        box-shadow: 0 2px 6px rgb(0 0 0 / 0.3), 0 0 0 1.5px rgb(255 255 255 / 0.9); }
+      .ripple { position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%;
+        border: 2px solid #3dafc4; background: rgb(61 175 196 / 0.18); opacity: 0; }
+      .ripple.go { animation: ripple 600ms ease-out 360ms; }
+      @keyframes ripple { from { opacity: 0.95; transform: scale(0.3); } to { opacity: 0; transform: scale(1.7); } }
+      @media (prefers-reduced-motion: reduce) { .cursor { transition: opacity 200ms ease; } .ripple.go { animation-delay: 0ms; } }
+    </style><div class="glow"><div class="pulse"><div class="edge t"></div><div class="edge b"></div><div class="edge l"></div><div class="edge r"></div></div>
+    <div class="cursor"><div class="ripple"></div><svg viewBox="0 0 24 24"><path d="M3 2v17.2l4.7-4.4 3.4 7.6 3.3-1.5-3.4-7.4h6.6z" fill="#1e7f8c" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg><span class="tag">Kera</span></div></div>`;
     document.documentElement.appendChild(host);
     // A page kept in the back-forward cache keeps its DOM, and its timers wait: it must not keep a border.
     const onHide = () => remove();
@@ -161,7 +196,13 @@ export function setBorder(state: BorderState): Promise<void> | void {
     const timer = setInterval(() => {
       if (!globalThis.chrome?.runtime?.id) remove();
     }, 2000);
-    b = { host, glow: root.querySelector('.glow') as HTMLElement, timer, onHide };
+    b = {
+      host,
+      glow: root.querySelector('.glow') as HTMLElement,
+      cursor: root.querySelector('.cursor') as HTMLElement,
+      timer,
+      onHide,
+    };
     g[KEY] = b;
   }
   const glow = b.glow;
@@ -188,6 +229,41 @@ export function setBorder(state: BorderState): Promise<void> | void {
     glow.addEventListener('transitionend', finish, { once: true });
     setTimeout(finish, 200);
     glow.style.opacity = '0';
+  });
+}
+
+/**
+ * Runs in the page like setBorder, after it: moves the cursor of the border's element to a viewport point, with a
+ * ripple for a click. The first move puts it there without gliding. Without a border it does nothing.
+ */
+export function movePointer(x: number, y: number, kind: PointerKind): void {
+  const b = (globalThis as unknown as Record<string, { cursor?: HTMLElement } | undefined>).__nanobrowserBorder;
+  const cursor = b?.cursor;
+  if (!cursor) return;
+  const first = !cursor.classList.contains('on');
+  if (first) cursor.style.transition = 'none';
+  cursor.style.setProperty('--x', `${Math.round(x)}px`);
+  cursor.style.setProperty('--y', `${Math.round(y)}px`);
+  if (first) {
+    void cursor.offsetWidth; // commit the jump before the transition comes back
+    cursor.style.transition = '';
+  }
+  cursor.classList.add('on');
+  const ripple = cursor.querySelector('.ripple');
+  if (kind === 'click' && ripple) {
+    ripple.classList.remove('go');
+    void (ripple as HTMLElement).offsetWidth; // restart the animation
+    ripple.classList.add('go');
+  }
+}
+
+/** Puts `movePointer(x, y, kind)` into a tab's top frame. */
+export async function injectPointer(tabId: number, x: number, y: number, kind: PointerKind): Promise<void> {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: movePointer,
+    args: [x, y, kind],
+    injectImmediately: true,
   });
 }
 

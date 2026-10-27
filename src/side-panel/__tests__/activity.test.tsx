@@ -65,6 +65,9 @@ describe('activity status line', () => {
     const html = renderToStaticMarkup(<Transcript entries={entries} streaming={null} live={{ waiting: false }} />);
     expect(text(html)).toContain('Working… 19s');
     expect(text(html)).not.toContain('Worked for');
+    // the steps show while it works, without a click
+    expect(html).toContain('aria-expanded="true"');
+    expect(html).toContain('<ul');
   });
 
   it('before the first reply the line stands alone, and a message sent during the run starts its own time', () => {

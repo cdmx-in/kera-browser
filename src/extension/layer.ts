@@ -8,6 +8,7 @@ import type {
   ConfirmAnswer,
   ConfirmRequest,
   Controller,
+  ControllerHost,
   UserPrompt,
 } from '@src/browser-control';
 
@@ -45,7 +46,17 @@ const routedPrompt: UserPrompt = {
   ask: (request: AskRequest, signal: AbortSignal): Promise<AskAnswer> => pick(request.tabId).ask(request, signal),
 };
 
-export const controllerReady: Promise<Controller> = createChromeController({ prompt: routedPrompt }).then(c => {
+let pointerRoute: ControllerHost['pointer'];
+
+/** Where the agent's pointer goes, for the cursor on the page (PageBorder). */
+export function setPointerRoute(route: NonNullable<ControllerHost['pointer']>): void {
+  pointerRoute = route;
+}
+
+export const controllerReady: Promise<Controller> = createChromeController({
+  prompt: routedPrompt,
+  pointer: (tabId, point, kind) => pointerRoute?.(tabId, point, kind),
+}).then(c => {
   console.info('[layer] controller ready, epoch', c.epoch.prefix, c.epoch.persisted ? '' : '(not persisted)');
   return c;
 });

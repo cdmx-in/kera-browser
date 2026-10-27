@@ -48,13 +48,9 @@ export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInpu
   );
 }
 
+/** A native select in the dropdown style (`.nb-select` in index.css); the browser still draws its list. */
 export function Select({ className = '', ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select
-      className={`max-w-full rounded-lg border border-nb-border bg-nb-bg px-2.5 py-1.5 text-sm transition-colors focus:border-nb-accent focus:outline-none focus:ring-2 focus:ring-nb-accent/25 ${className}`}
-      {...props}
-    />
-  );
+  return <select className={`nb-select ${className}`} {...props} />;
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
