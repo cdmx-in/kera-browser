@@ -14,6 +14,8 @@ export interface ModelChoice {
   name: string;
   /** Whether the model reasons; absent when unknown. */
   capability?: ReasoningSupport;
+  /** The catalogue's limit: "reading" = not for filling forms or sheets. */
+  limit?: 'reading';
 }
 
 const ALL: ReasoningEffort[] = ['none', 'low', 'medium', 'high'];
@@ -59,6 +61,7 @@ export function ModelMenu({
   // The button names the effort for a model known to reason.
   const showEffort = !!row && (chosen?.capability === 'optional' || chosen?.capability === 'always');
   const label = chosen ? chosen.name : t(models.length ? 'composer.noModel' : 'composer.noModels');
+  const limitNote = chosen?.limit ? t('composer.limitReading') : undefined;
 
   useEffect(() => {
     if (!open) return;
@@ -89,6 +92,7 @@ export function ModelMenu({
         type="button"
         disabled={!models.length}
         aria-label={`${t('composer.model')}: ${label}${showEffort && row ? ` · ${t(`reasoning.${row.shown}`)}` : ''}`}
+        title={limitNote}
         aria-haspopup="menu"
         aria-expanded={open}
         data-label={t('composer.model')}
@@ -151,7 +155,12 @@ export function ModelMenu({
                   close();
                   if (!sameRef(model, m.ref)) onModel(m.ref);
                 }}>
-                <span className="min-w-0 flex-1 truncate">{m.label}</span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate">{m.label}</span>
+                  {m.limit ? (
+                    <span className="whitespace-normal text-[11px] text-nb-muted">{t('composer.limitReading')}</span>
+                  ) : null}
+                </span>
                 <CheckIcon size={14} className={sameRef(model, m.ref) ? 'text-nb-accent' : 'invisible'} />
               </button>
             ))}

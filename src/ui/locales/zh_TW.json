@@ -80,6 +80,7 @@
   "composer.model": "模型",
   "composer.noModel": "選擇模型",
   "composer.noModels": "沒有模型",
+  "composer.limitReading": "僅適合閱讀頁面：填寫表單或試算表不可靠。請改用 gpt-6-luna。",
   "composer.send": "傳送",
   "composer.stop": "停止",
   "composer.needModel": "Kera Browser 需要一個模型才能對話。請連接模型服務商並選擇一個模型。",

@@ -1,6 +1,7 @@
 // Settings, provider configurations and API keys in chrome.storage.local. Keys sit under a key of their own: they
 // are never exported and never logged.
 import type { ProviderKind } from '../llm/providers';
+import { findRow, isCloudEndpoint } from '../llm/catalogue';
 import { resolveProfile } from '../llm/profiles';
 import type { LearntFacts } from '../llm/profiles';
 import type { ReasoningEffort, ReasoningSupport } from '../llm/catalogue';
@@ -219,6 +220,18 @@ export function capabilityOf(
     baseUrl: found.provider.baseUrl,
     ...learnt(found.model),
   }).reasoning;
+}
+
+/** The catalogue's limit for a configured model (see CatalogueRow.limit), or undefined. */
+export function limitOf(providers: ProviderConfig[], ref: ModelRef | null | undefined): 'reading' | undefined {
+  const found = findModel(providers, ref);
+  if (!found) return undefined;
+  return findRow(
+    found.provider.kind,
+    found.model.name,
+    undefined,
+    isCloudEndpoint(found.provider.kind, found.provider.baseUrl),
+  )?.limit;
 }
 
 /** A site's rule: one map, keyed with `siteOf`, one rule per site. */

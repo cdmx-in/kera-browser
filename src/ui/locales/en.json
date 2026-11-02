@@ -80,6 +80,7 @@
   "composer.model": "Model",
   "composer.noModel": "Choose a model",
   "composer.noModels": "No model",
+  "composer.limitReading": "Reading pages only: not reliable for filling forms or sheets. Use gpt-6-luna for that.",
   "composer.send": "Send",
   "composer.stop": "Stop",
   "composer.needModel": "Kera Browser needs a model to chat. Connect a model provider and pick a model.",

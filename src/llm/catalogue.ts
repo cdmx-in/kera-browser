@@ -42,6 +42,11 @@ export interface CatalogueRow {
   reasoning?: ReasoningSupport;
   /** What an effort becomes on the wire where the vendor's scale differs; applied last. */
   wire?: Partial<Record<ReasoningEffort, WireEffort>>;
+  /**
+   * A model that cannot reliably drive pages: "reading" = fine for questions about a page, not for filling forms or
+   * sheets. The model menu says so; nothing is blocked.
+   */
+  limit?: 'reading';
   /** The day the row was last checked, and against what: a URL, or an SDK package, version and function. */
   checked: string;
   source: string;
@@ -108,7 +113,7 @@ export const rows: CatalogueRow[] = [
   { id: 'gpt-4o', match: /^gpt-4o/, ...cloud(128_000, 16_384), reasoning: 'none', checked: D, source: 'https://developers.openai.com/api/docs/models/gpt-4o' },
   { id: 'gpt-old', match: /^gpt-(3\.5|4)(-turbo|-\d{4})?(-|$)/, ...cloud(128_000, 4096, false), reasoning: 'none', checked: D, source: 'https://developers.openai.com/api/docs/models (GPT-3.5 and GPT-4 do not reason)' },
   { id: 'gpt-oss-cloud', match: /^gpt-oss/, kinds: ['openai', 'openrouter', 'openai-compatible'], ...cloud(131_072, 131_072, false), reasoning: 'optional', checked: D, source: 'https://openrouter.ai/api/v1/models (gpt-oss: text in, reasoning effort low to high)' },
-  { id: 'gpt-oss-kera', match: /^gpt-oss/, kinds: ['kera'], ...cloud(65_536, 8192, false), reasoning: 'optional', checked: '2026-11-02', source: 'Kera pins num_ctx 65536 on its gpt-oss:20b model row (kera-apply.py), so Open WebUI asks Ollama for a 64k window on every request; before 2026-11-02 it was the 16k server default and runs overflowed after a few snapshots' },
+  { id: 'gpt-oss-kera', match: /^gpt-oss/, kinds: ['kera'], ...cloud(65_536, 8192, false), reasoning: 'optional', limit: 'reading', checked: '2026-11-02', source: 'Kera pins num_ctx 65536 on its gpt-oss:20b model row (kera-apply.py), so Open WebUI asks Ollama for a 64k window on every request; before 2026-11-02 it was the 16k server default and runs overflowed after a few snapshots. limit: eval sheets-test-data 2026-11-02, gpt-oss:20b 0/3 (asks for the data, invents refs) vs gpt-6-luna 1/1' },
   { id: 'o-series', match: range('oV(?:-(?:mini|pro))?'), since: '3', ...cloud(200_000, 100_000), reasoning: 'always', checked: D, source: 'https://developers.openai.com/api/docs/models/o3' },
   { id: 'gpt-5-4-pro', match: range('gpt-V-pro'), since: '5.4', ...cloud(1_050_000, 128_000), reasoning: 'always', wire: { low: 'medium' }, checked: D, source: 'https://developers.openai.com/api/docs/models/gpt-5.4-pro; https://developers.openai.com/api/docs/models/gpt-5.5-pro' },
   { id: 'gpt-5-2-pro', match: range('gpt-V-pro'), since: '5.2', ...cloud(400_000, 128_000), reasoning: 'always', wire: { low: 'medium' }, checked: D, source: 'https://developers.openai.com/api/docs/models/gpt-5.2-pro' },
