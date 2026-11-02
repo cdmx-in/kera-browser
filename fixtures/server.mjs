@@ -155,6 +155,8 @@ async function handle(req, res) {
         openai: env.OPENAI_API_KEY,
         gemini: env.GEMINI_API_KEY ?? env.GOOGLE_GENERATIVE_AI_API_KEY,
         openrouter: env.OPENROUTER_API_KEY,
+        kera: env.KERA_API_KEY,
+        'openai-compatible': env.OPENAI_COMPATIBLE_API_KEY,
       });
     }
     return send(res, 404, { error: 'unknown endpoint' });

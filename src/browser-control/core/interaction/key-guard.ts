@@ -238,6 +238,8 @@ export class KeyPresser {
 
   /** One character, as typing sends it: a key when the layout has one, inserted text otherwise. */
   async type(char: string): Promise<DialogInfo | undefined> {
+    // "\t" has no layout entry: typed as text it lands as U+0009 in one field, so it is pressed as Tab instead.
+    if (char === '\t') return this.press('Tab');
     if (this.port.isKey(char)) return this.press(char);
     return this.guard.unit(() => this.port.insertCharacter(char));
   }

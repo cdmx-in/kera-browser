@@ -25,6 +25,8 @@ export function splitChord(keys: string): { modifiers: string[]; key: string } {
 export function dispatchedKey(key: string): string {
   if (key === 'Enter' || key === 'NumpadEnter' || key === '\r' || key === '\n') return 'Enter';
   if (key === ' ' || key === 'Space') return 'Space';
+  // A typed tab is pressed as the Tab key (moves focus or, in a spreadsheet, to the next cell), never inserted as text.
+  if (key === '\t') return 'Tab';
   return key;
 }
 

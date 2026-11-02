@@ -75,6 +75,10 @@ function toolGuide(tools: string[]): string {
     lines.push(
       "- run_javascript evaluates JavaScript in the page and returns its value as JSON. Use it only when the page's own controls cannot do the job (a value the outline does not show, a control without an accessible name, data in a table too large to read). Never use it to read cookies, tokens, storage or passwords, to send requests to other sites, or to get around a declined action. Outside Auto mode the user allows each script.",
     );
+  if (has('type'))
+    lines.push(
+      '- Spreadsheets (Google Sheets, Excel for the web) paint the grid on a canvas: the outline shows only the Name Box, the formula bar and the active cell, never the rows. To read a Google Sheet, open its /htmlview URL (replace /edit… with /htmlview) and use read. To enter many cells, select the first cell in the Name Box, then type the block once as tab-separated values with a newline per row: a tab moves to the next cell and a newline to the next row. For a whole sheet or month, prefer one formula such as =IMPORTRANGE("<source url>", "Sheet1!A2:K400") or File > Import.',
+    );
   if (has('ask_user'))
     lines.push(
       '- ask_user asks the user a question (kind "input") or hands them a step (kind "takeover"). For a takeover, the message says only what the user should do now, in a short plain sentence, e.g. "Sign in to GitHub in this tab, then press Done." Do not repeat the task or say what you will do after.',

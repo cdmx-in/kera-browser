@@ -19,6 +19,7 @@ describe('keys the gate classifies', () => {
     for (const k of ['Enter', 'NumpadEnter', '\r', '\n']) expect(dispatchedKey(k)).toBe('Enter');
     for (const k of [' ', 'Space']) expect(dispatchedKey(k)).toBe('Space');
     expect(dispatchedKey('Escape')).toBe('Escape');
+    expect(dispatchedKey('\t')).toBe('Tab');
   });
 
   it('knows which key activates when it is released', () => {

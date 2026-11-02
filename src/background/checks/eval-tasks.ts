@@ -94,7 +94,46 @@ const replied = (f: RunFacts) =>
 
 const summarised = (f: RunFacts) => /keychron/i.test(f.answer) && /royal kludge|rk61/i.test(f.answer);
 
+/** The six October rows of s-payroll.html, as the consolidated sheet (s-conso.html) should hold them. */
+const PAYROLL: Array<[string, string, number, number, number, string]> = [
+  ['E1001', 'Aarav Sample', 85000, 6500, 78500, '10010001001'],
+  ['E1002', 'Diya Example', 62000, 4100, 57900, '10010001002'],
+  ['E1003', 'Kabir Demo', 48000, 2000, 46000, '10010001003'],
+  ['E1004', 'Meera Placeholder', 55000, 3200, 51800, '10010001004'],
+  ['E1005', 'Rohan Fixture', 97000, 9400, 87600, '10010001005'],
+  ['E1006', 'Sana Testcase', 39000, 2000, 37000, '10010001006'],
+];
+const num = (v: string | undefined) => Number(String(v ?? '').replace(/[^\d.-]/g, ''));
+/** Every employee sits in one row at or below 14 with code, name, month, gross, deductions, net and account in A-G. */
+function pastedPayroll(f: RunFacts): boolean {
+  const last = [...f.posts].reverse().find(p => p.startsWith('sheet='));
+  if (!last) return false;
+  const cells = JSON.parse(decodeURIComponent(last.slice('sheet='.length))) as Record<string, string>;
+  return PAYROLL.every(([code, name, gross, ded, net, acct]) =>
+    Array.from({ length: 26 }, (_, i) => 14 + i).some(
+      r =>
+        cells[`A${r}`]?.trim() === code &&
+        cells[`B${r}`]?.trim() === name &&
+        /oct/i.test(cells[`C${r}`] ?? '') &&
+        /2026/.test(cells[`C${r}`] ?? '') &&
+        num(cells[`D${r}`]) === gross &&
+        num(cells[`E${r}`]) === ded &&
+        num(cells[`F${r}`]) === net &&
+        String(cells[`G${r}`] ?? '').replace(/\D/g, '') === acct,
+    ),
+  );
+}
+
 export const TASKS: EvalTask[] = [
+  {
+    // A Google-Sheets-like canvas grid: the rows of a payroll register (another page) go below the existing rows, with
+    // the columns mapped. The grid posts its cells to /submit on every change; the last post is graded.
+    id: 'sheets-bulk-entry',
+    url: `${FIXTURE_ORIGIN}/s-conso.html`,
+    task: `Paste the October 2026 rows from the salary register at ${FIXTURE_ORIGIN}/s-payroll.html into this consolidated sheet, below the existing rows, mapping the register's columns to the sheet's columns. Leave Remarks empty.`,
+    allow: /./,
+    grade: pastedPayroll,
+  },
   {
     id: 'read-price',
     url: `${FIXTURE_ORIGIN}/e-shop.html`,

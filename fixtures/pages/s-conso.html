@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Consolidated Salary Register 2026-27 - Google Sheets</title><link rel="stylesheet" href="/style.css">
+<style>
+  body{font:13px sans-serif;margin:0;padding:8px}
+  #bar{display:flex;gap:8px;align-items:center;margin:4px 0}
+  #name-box{width:70px}
+  #formula-bar{flex:1;border:1px solid #bbb;min-height:18px;padding:2px 4px}
+  #grid-container{position:relative;width:960px;height:620px;overflow:hidden;border:1px solid #bbb;outline:none}
+  #grid{display:block}
+  #cell-input{position:absolute;left:0;top:0;width:110px;height:20px;padding:1px 3px;border:2px solid #1a73e8;background:#fff;outline:none;opacity:0;overflow:hidden;white-space:pre}
+  #cell-input.editing{opacity:1}
+</style></head>
+<body>
+<!-- Evaluation fixture: a Google-Sheets-like DESTINATION. The grid is painted on a canvas (no DOM text, like Sheets);
+     the accessible controls are the Name Box, the formula bar and a cell editor that follows the active cell. Keys as
+     in Sheets: typing edits the active cell, Enter commits and moves down, Tab commits and moves right, arrows move,
+     Escape cancels, Ctrl+V of tab-separated text fills a range from the active cell. Every change posts the data
+     to /submit (the grader reads the last post). -->
+<h1 style="font-size:16px;margin:0 0 4px">Consolidated Salary Register 2026-27</h1>
+<div id="bar">
+  <input id="name-box" aria-label="Name box" value="A1" title="Name box: type a cell like A14 and press Enter">
+  <span>fx</span>
+  <div id="formula-bar" contenteditable="true" role="textbox" aria-label="Formula bar"></div>
+</div>
+<div id="grid-container" tabindex="0" role="grid" aria-label="Sheet1">
+  <canvas id="grid" width="960" height="620"></canvas>
+  <div id="cell-input" contenteditable="true" role="textbox" aria-label="Cell input"></div>
+</div>
+<p class="note">Sheet1 · Rows 2-13 hold Aug-2026 and Sep-2026. Paste the next month below them.</p>
+<script>
+  const COLS = 8, ROWS = 40, CW = 110, RH = 20, HW = 40;
+  const letters = 'ABCDEFGH';
+  const cells = {};
+  const header = ['Emp Code', 'Employee', 'Month', 'Gross', 'Deductions', 'Net Pay', 'Bank A/c', 'Remarks'];
+  header.forEach((h, c) => (cells[letters[c] + 1] = h));
+  const emp = [
+    ['E1001', 'Aarav Sample', 10010001001], ['E1002', 'Diya Example', 10010001002], ['E1003', 'Kabir Demo', 10010001003],
+    ['E1004', 'Meera Placeholder', 10010001004], ['E1005', 'Rohan Fixture', 10010001005], ['E1006', 'Sana Testcase', 10010001006],
+  ];
+  const past = { 'Aug-2026': [[84000, 6400], [62000, 4100], [48000, 2000], [55000, 3200], [95000, 9100], [39000, 2000]],
+                 'Sep-2026': [[85000, 6500], [62000, 4100], [48000, 2000], [55000, 3200], [97000, 9400], [39000, 2000]] };
+  let r = 2;
+  for (const [month, rows] of Object.entries(past))
+    rows.forEach(([gross, ded], i) => {
+      const [code, name, acct] = emp[i];
+      [code, name, month, gross, ded, gross - ded, acct, ''].forEach((v, c) => { if (v !== '') cells[letters[c] + r] = String(v); });
+      r++;
+    });
+  window.sheet = { cells };
+
+  const canvas = document.getElementById('grid'), ctx = canvas.getContext('2d');
+  const input = document.getElementById('cell-input'), nameBox = document.getElementById('name-box');
+  const formula = document.getElementById('formula-bar'), container = document.getElementById('grid-container');
+  let active = { c: 0, r: 1 }, range = null, editing = false;
+  // Like Sheets: Tab remembers the column where the run of entries began; Enter returns there on the next row.
+  let tabStart = null;
+  const ref = ({ c, r }) => letters[c] + r;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '12px sans-serif'; ctx.textBaseline = 'middle';
+    for (let i = 0; i <= COLS; i++) { ctx.fillStyle = '#f3f3f3'; ctx.fillRect(HW + i * CW, 0, CW, RH); }
+    ctx.fillStyle = '#f3f3f3'; ctx.fillRect(0, 0, HW, canvas.height);
+    if (range) { ctx.fillStyle = 'rgba(26,115,232,.12)'; ctx.fillRect(HW + range.c0 * CW, range.r0 * RH, (range.c1 - range.c0 + 1) * CW, (range.r1 - range.r0 + 1) * RH); }
+    ctx.strokeStyle = '#ddd'; ctx.beginPath();
+    for (let i = 0; i <= COLS + 1; i++) { ctx.moveTo(HW + i * CW + .5, 0); ctx.lineTo(HW + i * CW + .5, canvas.height); }
+    for (let j = 0; j <= ROWS; j++) { ctx.moveTo(0, j * RH + .5); ctx.lineTo(canvas.width, j * RH + .5); }
+    ctx.stroke();
+    ctx.fillStyle = '#333'; ctx.textAlign = 'center';
+    for (let i = 0; i < COLS; i++) ctx.fillText(letters[i], HW + i * CW + CW / 2, RH / 2);
+    for (let j = 1; j < ROWS; j++) ctx.fillText(String(j), HW / 2, j * RH + RH / 2);
+    ctx.textAlign = 'left';
+    for (let j = 1; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+      const v = cells[letters[i] + j]; if (v === undefined) continue;
+      ctx.fillStyle = j === 1 ? '#000' : '#222'; ctx.font = j === 1 ? 'bold 12px sans-serif' : '12px sans-serif';
+      ctx.save(); ctx.beginPath(); ctx.rect(HW + i * CW, j * RH, CW, RH); ctx.clip();
+      ctx.fillText(v, HW + i * CW + 4, j * RH + RH / 2); ctx.restore();
+    }
+    ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 2; ctx.strokeRect(HW + active.c * CW + 1, active.r * RH + 1, CW - 2, RH - 2); ctx.lineWidth = 1;
+    input.style.left = HW + active.c * CW + 'px'; input.style.top = active.r * RH + 'px';
+    nameBox.value = ref(active); if (!editing) formula.textContent = cells[ref(active)] ?? '';
+    input.setAttribute('aria-label', 'Cell input ' + ref(active));
+  }
+  let postTimer;
+  function changed() {
+    draw();
+    clearTimeout(postTimer);
+    postTimer = setTimeout(() => fetch('/submit', { method: 'POST', body: 'sheet=' + encodeURIComponent(JSON.stringify(cells)) }), 300);
+  }
+  function setCell(c, r, v) { const k = letters[c] + r; if (v === '' || v == null) delete cells[k]; else cells[k] = String(v); }
+  function move(dc, dr) { active = { c: Math.min(COLS - 1, Math.max(0, active.c + dc)), r: Math.min(ROWS - 1, Math.max(1, active.r + dr)) }; range = null; draw(); }
+  function startEdit(initial) { editing = true; input.classList.add('editing'); input.textContent = initial ?? (cells[ref(active)] ?? ''); input.focus(); }
+  function commit() { if (!editing) return; editing = false; input.classList.remove('editing'); setCell(active.c, active.r, input.textContent.replace(/\n/g, '')); input.textContent = ''; changed(); }
+  function cancel() { editing = false; input.classList.remove('editing'); input.textContent = ''; draw(); }
+  function pasteBlock(text) {
+    const rows = text.replace(/\r/g, '').split('\n'); if (rows.at(-1) === '') rows.pop();
+    const grid = rows.map(row => row.split('\t'));
+    grid.forEach((row, dr) => row.forEach((v, dc) => { if (active.c + dc < COLS && active.r + dr < ROWS) setCell(active.c + dc, active.r + dr, v); }));
+    range = { c0: active.c, r0: active.r, c1: Math.min(COLS - 1, active.c + Math.max(...grid.map(g => g.length)) - 1), r1: Math.min(ROWS - 1, active.r + grid.length - 1) };
+    changed();
+  }
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit(); const back = tabStart ?? active.c; tabStart = null; move(back - active.c, 1); }
+    else if (e.key === 'Tab') { e.preventDefault(); commit(); if (tabStart === null) tabStart = active.c; move(e.shiftKey ? -1 : 1, 0); }
+    else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    else if (!editing && /^Arrow/.test(e.key)) { e.preventDefault(); tabStart = null; move(e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0, e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0); }
+    else if (!editing && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); setCell(active.c, active.r, ''); changed(); }
+    else if (!editing && e.key.length === 1 && !e.ctrlKey && !e.metaKey) { startEdit(''); }
+  });
+  input.addEventListener('beforeinput', e => { if (!editing && e.inputType === 'insertText') startEdit(''); });
+  input.addEventListener('paste', e => {
+    const text = e.clipboardData.getData('text/plain');
+    if (!editing || /[\t\n]/.test(text)) { e.preventDefault(); if (editing) cancel(); pasteBlock(text); }
+  });
+  input.addEventListener('blur', () => { if (editing) commit(); });
+  container.addEventListener('mousedown', e => {
+    const rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, y = e.clientY - rect.top;
+    if (x < HW || y < RH) return;
+    if (editing) commit();
+    active = { c: Math.min(COLS - 1, Math.floor((x - HW) / CW)), r: Math.min(ROWS - 1, Math.floor(y / RH)) }; range = null; tabStart = null; draw();
+    e.preventDefault(); input.focus();
+  });
+  container.addEventListener('dblclick', () => startEdit());
+  container.addEventListener('focus', () => input.focus());
+  nameBox.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const m = /^([A-H])(\d{1,2})$/i.exec(nameBox.value.trim());
+    if (m) { active = { c: letters.indexOf(m[1].toUpperCase()), r: Math.min(ROWS - 1, Number(m[2])) }; range = null; tabStart = null; }
+    draw(); input.focus();
+  });
+  formula.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); setCell(active.c, active.r, formula.textContent); changed(); move(0, 1); input.focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); draw(); input.focus(); }
+  });
+  draw();
+  input.focus();
+</script>
+</body>
+</html>

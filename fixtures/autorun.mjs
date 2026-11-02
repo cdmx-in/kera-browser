@@ -69,6 +69,8 @@ const chromeArgs = [
   // Chrome for Testing never touches the real macOS Keychain: it keeps its passwords and cookies' key in a mock one.
   '--use-mock-keychain',
   '--no-first-run',
+  // Chrome refuses its sandbox under root (CI containers, dev VMs).
+  ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
   '--no-default-browser-check',
   '--disable-search-engine-choice-screen',
   '--enable-logging=stderr',
@@ -83,6 +85,8 @@ const chromeArgs = [
   // A display with more than one device pixel per CSS pixel (a Retina display is 2).
   ...(option('--scale') ? [`--force-device-scale-factor=${option('--scale')}`] : []),
   ...(flag('--headful') ? [] : ['--headless=new']),
+  // Extra Chrome switches, '|'-separated (a switch value may hold spaces, e.g. --host-resolver-rules).
+  ...(process.env.CHROME_EXTRA_ARGS ? process.env.CHROME_EXTRA_ARGS.split('|').filter(Boolean) : []),
   // Headless Chrome announces itself in its user agent, and some real sites then serve a block page.
   ...(flag('--real-ua')
     ? [
