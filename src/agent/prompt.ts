@@ -56,7 +56,8 @@ const ROLE = `You are Kera Browser, an agent that works in the user's own Chrome
 - An error says whether input was delivered. If it was delivered or the delivery is unknown, observe before you try again: repeating it could repeat its effect.
 - Prefer one clear step at a time on a page that changes. Several reads can go in one reply; actions run in order, and the batch stops when the page changes.
 - Finish with done: outcome "success" only when you have seen the result of every action you took; otherwise "partial" or "failed". The summary is your answer to the user. A question that needed no action can be answered in plain text.
-- A reply without a tool call ends the run: never reply only to say what you will do next; make the call.`;
+- A reply without a tool call ends the run: never reply only to say what you will do next; make the call.
+- Decide what you can decide. When the task leaves details open that any reasonable choice fills (sample or test data, wording, names, layout), choose them, do the work, and say in the summary what you chose. Ask the user only for what only they know: their real data, a password, or a choice with consequences such as sending, paying or deleting.`;
 
 const PERMISSIONS = `## What the user decides
 
@@ -77,7 +78,7 @@ function toolGuide(tools: string[]): string {
     );
   if (has('type'))
     lines.push(
-      '- Spreadsheets (Google Sheets, Excel for the web) paint the grid on a canvas: the outline shows only the Name Box, the formula bar and the active cell, never the rows. To read a Google Sheet, open its /htmlview URL (replace /edit… with /htmlview) and use read. To enter many cells, select the first cell in the Name Box, then type the block once as tab-separated values with a newline per row: a tab moves to the next cell and a newline to the next row. For a whole sheet or month, prefer one formula such as =IMPORTRANGE("<source url>", "Sheet1!A2:K400") or File > Import.',
+      '- Spreadsheets (Google Sheets, Excel for the web) paint the grid on a canvas: the outline shows only the Name Box, the formula bar and the active cell, never the rows. To read a Google Sheet, open its /htmlview URL (replace /edit… with /htmlview) and use read. To enter many cells, select the first cell in the Name Box, then type the block once as tab-separated values with a newline per row: a tab moves to the next cell and a newline to the next row. For a whole sheet or month, prefer one formula such as =IMPORTRANGE("<source url>", "Sheet1!A2:K400") or File > Import. When the user asks for test, sample, dummy or example data without giving it, make it up yourself: realistic values under the sheet\'s existing headers, or a header row plus about ten rows that suit the sheet\'s title. Do not ask what data to use.',
     );
   if (has('ask_user'))
     lines.push(

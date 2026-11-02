@@ -27,6 +27,8 @@ interface EvalArgs {
   model: string;
   baseUrl?: string;
   contextWindow?: number;
+  /** Overrides whether the model sees screenshots, e.g. to mimic Kera's gpt-oss row (no vision) through another kind. */
+  vision?: boolean;
   tools?: 'full' | 'short';
   modes?: PermissionMode[];
   tasks?: string[];
@@ -109,7 +111,13 @@ async function runOne(
     kind: args.kind,
     modelName: args.model,
     baseUrl: args.baseUrl,
-    overrides: args.contextWindow ? { contextWindow: args.contextWindow } : undefined,
+    overrides:
+      args.contextWindow || args.vision !== undefined
+        ? {
+            ...(args.contextWindow ? { contextWindow: args.contextWindow } : {}),
+            ...(args.vision !== undefined ? { vision: args.vision } : {}),
+          }
+        : undefined,
     detectedContext: detected,
   });
   const chat = createModel({
@@ -239,6 +247,7 @@ async function runOne(
         }
       : undefined,
     answer: answer.slice(0, 600),
+    errors: results.filter(t => t.startsWith('error ')).map(t => t.slice(0, 400)),
     calls: calls.map(c => `${c.name} ${c.args}`.slice(0, 160)),
   };
 }

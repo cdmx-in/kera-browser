@@ -124,7 +124,31 @@ function pastedPayroll(f: RunFacts): boolean {
   );
 }
 
+/** At least `rows` rows of the canvas sheet (s-conso.html) hold `cols` or more non-empty cells, per its last post. */
+function filledRows(rows: number, cols: number) {
+  return (f: RunFacts): boolean => {
+    const last = [...f.posts].reverse().find(p => p.startsWith('sheet='));
+    if (!last) return false;
+    const cells = JSON.parse(decodeURIComponent(last.slice('sheet='.length))) as Record<string, string>;
+    const perRow = new Map<string, number>();
+    for (const [key, value] of Object.entries(cells)) {
+      if (!String(value).trim()) continue;
+      const row = key.slice(1);
+      perRow.set(row, (perRow.get(row) ?? 0) + 1);
+    }
+    return [...perRow.values()].filter(n => n >= cols).length >= rows;
+  };
+}
+
 export const TASKS: EvalTask[] = [
+  {
+    // A finance user's real prompt on an empty Google Sheet (2026-11-02): the agent should invent sample rows, not ask.
+    id: 'sheets-test-data',
+    url: `${FIXTURE_ORIGIN}/s-conso.html?blank`,
+    task: 'start filling in test data in this sheet',
+    allow: /./,
+    grade: filledRows(3, 3),
+  },
   {
     // A Google-Sheets-like canvas grid: the rows of a payroll register (another page) go below the existing rows, with
     // the columns mapped. The grid posts its cells to /submit on every change; the last post is graded.

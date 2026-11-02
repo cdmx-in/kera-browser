@@ -32,8 +32,11 @@
   const COLS = 8, ROWS = 40, CW = 110, RH = 20, HW = 40;
   const letters = 'ABCDEFGH';
   const cells = {};
+  // ?blank: an empty "Untitled spreadsheet", for tasks that start from nothing
+  const blank = new URLSearchParams(location.search).has('blank');
+  if (blank) { document.title = 'Untitled spreadsheet - Google Sheets'; document.querySelector('h1').textContent = 'Untitled spreadsheet'; document.querySelector('p.note').remove(); }
   const header = ['Emp Code', 'Employee', 'Month', 'Gross', 'Deductions', 'Net Pay', 'Bank A/c', 'Remarks'];
-  header.forEach((h, c) => (cells[letters[c] + 1] = h));
+  if (!blank) header.forEach((h, c) => (cells[letters[c] + 1] = h));
   const emp = [
     ['E1001', 'Aarav Sample', 10010001001], ['E1002', 'Diya Example', 10010001002], ['E1003', 'Kabir Demo', 10010001003],
     ['E1004', 'Meera Placeholder', 10010001004], ['E1005', 'Rohan Fixture', 10010001005], ['E1006', 'Sana Testcase', 10010001006],
@@ -41,7 +44,7 @@
   const past = { 'Aug-2026': [[84000, 6400], [62000, 4100], [48000, 2000], [55000, 3200], [95000, 9100], [39000, 2000]],
                  'Sep-2026': [[85000, 6500], [62000, 4100], [48000, 2000], [55000, 3200], [97000, 9400], [39000, 2000]] };
   let r = 2;
-  for (const [month, rows] of Object.entries(past))
+  if (!blank) for (const [month, rows] of Object.entries(past))
     rows.forEach(([gross, ded], i) => {
       const [code, name, acct] = emp[i];
       [code, name, month, gross, ded, gross - ded, acct, ''].forEach((v, c) => { if (v !== '') cells[letters[c] + r] = String(v); });
