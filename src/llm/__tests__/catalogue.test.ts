@@ -85,6 +85,7 @@ const MATRIX: Array<[ProviderKind, string, string | null, ReasoningSupport | und
   ['openai', 'unknown-model', null, undefined, UNKNOWN],
   ['openrouter', 'openai/gpt-oss-120b', 'gpt-oss-cloud', 'optional', ALL],
   ['kera', 'gpt-oss:20b', 'gpt-oss-kera', 'optional', ALL],
+  ['kera', 'qwen3.8:27b', 'qwen3.8-kera', 'none', NOTHING],
   ['openrouter', 'openai/gpt-next', 'openai-family', 'always', ALWAYS],
   // Google
   ['gemini', 'gemini-3-pro-preview', 'gemini-3-pro-preview', 'always', HIGH_FOR_MEDIUM],

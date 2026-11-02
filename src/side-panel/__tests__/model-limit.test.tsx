@@ -50,3 +50,13 @@ describe('model limit', () => {
     );
   });
 });
+
+describe("Kera's local browser model", () => {
+  it('Qwen3.8 through Kera sees screenshots, has a 64k window, no effort choice and no reading-only note', async () => {
+    const { resolveProfile } = await import('@src/llm/profiles');
+    const p = resolveProfile({ kind: 'kera', modelName: 'qwen3.8:27b' });
+    expect(p).toMatchObject({ contextWindow: 65_536, vision: true, reasoning: 'none' });
+    const k = { id: 'k', kind: 'kera', name: 'Kera', models: [{ name: 'qwen3.8:27b' }] } as unknown as ProviderConfig;
+    expect(limitOf([k], { providerId: 'k', model: 'qwen3.8:27b' })).toBeUndefined();
+  });
+});
