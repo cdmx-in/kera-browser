@@ -106,9 +106,8 @@ const PAYROLL: Array<[string, string, number, number, number, string]> = [
 const num = (v: string | undefined) => Number(String(v ?? '').replace(/[^\d.-]/g, ''));
 /** Every employee sits in one row at or below 14 with code, name, month, gross, deductions, net and account in A-G. */
 function pastedPayroll(f: RunFacts): boolean {
-  const last = [...f.posts].reverse().find(p => p.startsWith('sheet='));
-  if (!last) return false;
-  const cells = JSON.parse(decodeURIComponent(last.slice('sheet='.length))) as Record<string, string>;
+  const cells = lastSheet(f);
+  if (!cells) return false;
   return PAYROLL.every(([code, name, gross, ded, net, acct]) =>
     Array.from({ length: 26 }, (_, i) => 14 + i).some(
       r =>
@@ -124,20 +123,64 @@ function pastedPayroll(f: RunFacts): boolean {
   );
 }
 
-/** At least `rows` rows of the canvas sheet (s-conso.html) hold `cols` or more non-empty cells, per its last post. */
-function filledRows(rows: number, cols: number) {
-  return (f: RunFacts): boolean => {
-    const last = [...f.posts].reverse().find(p => p.startsWith('sheet='));
-    if (!last) return false;
-    const cells = JSON.parse(decodeURIComponent(last.slice('sheet='.length))) as Record<string, string>;
-    const perRow = new Map<string, number>();
-    for (const [key, value] of Object.entries(cells)) {
-      if (!String(value).trim()) continue;
-      const row = key.slice(1);
-      perRow.set(row, (perRow.get(row) ?? 0) + 1);
-    }
-    return [...perRow.values()].filter(n => n >= cols).length >= rows;
-  };
+/** The cells of the canvas sheet (s-conso.html) as its last post holds them; null before any post. */
+function lastSheet(f: RunFacts): Record<string, string> | null {
+  const last = [...f.posts].reverse().find(p => p.startsWith('sheet='));
+  return last ? (JSON.parse(decodeURIComponent(last.slice('sheet='.length))) as Record<string, string>) : null;
+}
+
+/**
+ * A table typed into the canvas sheet with its rows aligned: the top filled row is a header of `cols` or more cells,
+ * the rows right below it stay within the header's columns, and `rows` or more of them fill those columns (one blank
+ * cell allowed). No header label reappears below it, which a block typed into a selected range (where Tab and Enter
+ * wrap inside the range) leaves behind.
+ */
+export function alignedTable(cells: Record<string, string>, rows: number, cols: number): boolean {
+  const filled = new Map<number, Map<string, string>>();
+  for (const [key, value] of Object.entries(cells)) {
+    if (!String(value).trim()) continue;
+    const r = Number(key.slice(1));
+    if (!filled.has(r)) filled.set(r, new Map());
+    filled.get(r)!.set(key[0], String(value).trim());
+  }
+  const order = [...filled.keys()].sort((a, b) => a - b);
+  if (!order.length) return false;
+  const header = filled.get(order[0])!;
+  if (header.size < cols) return false;
+  const labels = new Set([...header.values()].map(v => v.toLowerCase()));
+  let aligned = 0;
+  for (let r = order[0] + 1; filled.has(r); r++) {
+    const row = filled.get(r)!;
+    if ([...row.keys()].some(c => !header.has(c))) return false;
+    if ([...row.values()].some(v => labels.has(v.toLowerCase()))) return false;
+    // A short row (a total under the table) is allowed; only full rows count.
+    if (row.size >= header.size - 1) aligned++;
+  }
+  return aligned >= rows && order.every(r => r === order[0] || filled.has(r - 1));
+}
+
+/**
+ * Every row of the last tab-separated block the agent typed sits in one sheet row, its cells side by side in order:
+ * a block typed into a selected range wraps inside the range and breaks them up. True when no block was typed.
+ */
+export function typedBlockLanded(calls: RunFacts['calls'], cells: Record<string, string>): boolean {
+  const typed = calls
+    .filter(c => c.name === 'type')
+    .map(c => String((JSON.parse(c.args) as { text?: string }).text ?? ''))
+    .filter(t => t.includes('\t'))
+    .at(-1);
+  if (typed === undefined) return true;
+  const cols = 'ABCDEFGHIJ';
+  const lines = typed
+    .split(/\r?\n/)
+    .map(l => l.split('\t').map(v => v.trim()))
+    .map(v => (v.at(-1) === '' ? v.slice(0, -1) : v))
+    .filter(v => v.length > 1);
+  return lines.every(values =>
+    Array.from({ length: 40 }, (_, r) => r + 1).some(r =>
+      [...cols].some((_, c) => values.every((v, i) => (cells[`${cols[c + i]}${r}`] ?? '').trim() === v)),
+    ),
+  );
 }
 
 export const TASKS: EvalTask[] = [
@@ -147,7 +190,10 @@ export const TASKS: EvalTask[] = [
     url: `${FIXTURE_ORIGIN}/s-conso.html?blank`,
     task: 'start filling in test data in this sheet',
     allow: /./,
-    grade: filledRows(3, 3),
+    grade: f => {
+      const cells = lastSheet(f);
+      return !!cells && alignedTable(cells, 3, 3) && typedBlockLanded(f.calls, cells);
+    },
   },
   {
     // A Google-Sheets-like canvas grid: the rows of a payroll register (another page) go below the existing rows, with

@@ -114,9 +114,11 @@ export interface GuardReport {
   /** Text mode: keydown and beforeinput events accepted at the target, so the controller can tell that each key or
    *  insertion of a sequence arrived there. Pointer mode: press events (pointerdown, mousedown) accepted. */
   accepted?: number;
-  /** Text mode: keyups that arrived elsewhere after their key was accepted (the key's own default action, such as
-   *  Tab or a submission, moved focus); they are withheld from the page, and are not a failure. */
-  strayKeyups?: number;
+  /** Text mode: the rest of a key the target accepted that arrived elsewhere, withheld from the page and not a failure:
+   *  its keyup, after the key's own default action (Tab, a submission) moved focus; or its keypress, when the page's
+   *  keydown handler moved focus to a text editor (Google Sheets' Name Box hands focus to the grid's hidden editor on
+   *  Enter's keydown, so the keypress lands there). */
+  strayKeys?: number;
 }
 
 /** The text guard between two keys of a sequence. */
@@ -375,6 +377,9 @@ export function probeMain(): void {
     }
     return el;
   };
+  /** A text editor (a contenteditable element, such as a spreadsheet's or a document's hidden editor): a keypress
+   *  there edits text and cannot activate a control. */
+  const editor = (el: Element | null) => el instanceof HTMLElement && el.isContentEditable;
   /** The focused element, through the target's chain of shadow roots. */
   const deepActiveElement = (roots: ShadowRoot[]): Element | null => {
     let el = document.activeElement;
@@ -919,7 +924,7 @@ export function probeMain(): void {
         hit === target || (unfocused && (!hit || hit === document.documentElement));
       const report: GuardReport =
         mode === 'text'
-          ? { verdict: 'none', hit: '', seen: [], accepted: 0, strayKeyups: 0 }
+          ? { verdict: 'none', hit: '', seen: [], accepted: 0, strayKeys: 0 }
           : { verdict: 'none', hit: '', seen: [], accepted: 0 };
       const cancel = (e: Event) => {
         e.preventDefault();
@@ -945,9 +950,12 @@ export function probeMain(): void {
           return;
         }
         // A keyup elsewhere follows a key the target accepted, whose default action moved focus (Tab, a
-        // submission): withheld from the page, but not a failure. Any other event elsewhere cancels the sequence.
-        if (mode === 'text' && e.type === 'keyup') {
-          report.strayKeyups!++;
+        // submission); a keypress in a text editor elsewhere follows a keydown the target accepted, whose handler moved
+        // focus there (a spreadsheet's Name Box hands focus to the grid's editor). Either is withheld from the page,
+        // so it has no effect, but is not a failure. Any other event elsewhere (a keypress on a button, which would
+        // activate it) cancels the sequence.
+        if (mode === 'text' && (e.type === 'keyup' || (e.type === 'keypress' && editor(hit)))) {
+          report.strayKeys!++;
           return cancel(e);
         }
         report.verdict = 'cancelled';
@@ -978,15 +986,21 @@ export function probeMain(): void {
      */
     armAwayGuard(lifetimeMs = 4000) {
       guard?.remove();
-      const report: GuardReport = { verdict: 'none', hit: '', seen: [], strayKeyups: 0 };
+      const report: GuardReport = { verdict: 'none', hit: '', seen: [], strayKeys: 0 };
       const handler = (e: Event) => {
         if (!e.isTrusted) return;
         note(report, e.type);
-        if (report.verdict === 'none' && e.type !== 'keyup') {
+        // A keypress in a text editor here follows a keydown the target's frame accepted (its handler moved focus):
+        // withheld like a stray keyup.
+        if (
+          report.verdict === 'none' &&
+          e.type !== 'keyup' &&
+          !(e.type === 'keypress' && editor(document.activeElement))
+        ) {
           report.verdict = 'cancelled';
           report.hit = document.activeElement ? api.describe(document.activeElement) : 'nothing';
         }
-        if (report.verdict !== 'cancelled') report.strayKeyups!++;
+        if (report.verdict !== 'cancelled') report.strayKeys!++;
         e.preventDefault();
         e.stopImmediatePropagation();
       };

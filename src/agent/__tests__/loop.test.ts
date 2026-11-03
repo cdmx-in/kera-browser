@@ -57,6 +57,29 @@ const call = (name: string, input: unknown, id: string) => ({ name, input, id })
 const done = (id = 'd') => ({ toolCalls: [call('done', { outcome: 'success', summary: 'All done.' }, id)] });
 
 describe('the loop', () => {
+  it('takes a tab id written as digits, and refuses a float such as Ollama renders without calling the layer', async () => {
+    const { c, loop, layer } = await setup([
+      {
+        toolCalls: [
+          call('tabs', { action: 'select', tabId: '1' }, 'a'),
+          call('tabs', { action: 'select', tabId: '1.657934582e+09' }, 'b'),
+        ],
+      },
+      done(),
+    ]);
+    await loop.run();
+    expect(layer.calls.filter(x => x.tool === 'tabs').map(x => x.args.tabId)).toEqual([1]);
+    const r = await results(c.id);
+    expect(r.b).toContain('INVALID_ARGUMENT');
+    expect(r.b).toContain('"1" «New Tab»');
+    // The history keeps what the model wrote.
+    const branch = await activeBranch(c.id);
+    const written = branch.flatMap(e =>
+      e.type === 'message' ? e.message.parts.flatMap(p => (p.type === 'tool-call' ? [p.input] : [])) : [],
+    );
+    expect(written[0]).toEqual({ action: 'select', tabId: '1' });
+  });
+
   it('runs a reply’s calls, gives every call a result, and ends with done and its summary', async () => {
     const { c, loop, layer } = await setup([
       { toolCalls: [call('snapshot', {}, 'a'), call('click', { target: { ref: 'a1' } }, 'b')] },

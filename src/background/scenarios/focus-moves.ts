@@ -222,3 +222,40 @@ defineScenario({
     });
   },
 });
+
+defineScenario({
+  id: 'R2-sheets-name-box',
+  set: 'C',
+  title:
+    'Google-Sheets-like grid: set the Name Box to C5 with submit, whose Enter keydown hands focus to the hidden cell editor; then type a block with no target; then the same into the range A1:B2',
+  covers:
+    'the keypress of an accepted Enter that lands in a text editor is withheld, not a failure; keys follow the cell editor; Tab wraps inside a selected range, as in Sheets',
+  async run(ctx) {
+    return withUser(approveFieldEnter, async () => {
+      const tabId = await ctx.open(`${FIXTURE_ORIGIN}/s-conso.html?blank`);
+      const snap = await ctx.call('snapshot');
+      const nameBox = refOf(snap, /textbox = "A1"/);
+      const cells = () => read<Record<string, string>>(tabId, 'window.sheet.cells');
+      const go = await ctx.call('set', { target: { ref: nameBox }, value: 'C5', submit: true });
+      const typed = await ctx.call('type', { text: 'x\ty\nz' });
+      const after = await cells();
+      const range = await ctx.call('set', { target: { ref: nameBox }, value: 'A1:B2', submit: true });
+      const wrapped = await ctx.call('type', { text: '1\t2\t3\t' });
+      const end = await cells();
+      return outcome(
+        'both sets ok; C5 "x", D5 "y", C6 "z"; in the range A1 "1", B1 "2", A2 "3"',
+        `set ${err(go)}; type ${err(typed)}; set range ${err(range)}; type ${err(wrapped)}; cells ${JSON.stringify(end)} (after the first block ${JSON.stringify(after)})`,
+        go.ok &&
+          typed.ok &&
+          range.ok &&
+          wrapped.ok &&
+          after.C5 === 'x' &&
+          after.D5 === 'y' &&
+          end.C6 === 'z' &&
+          end.A1 === '1' &&
+          end.B1 === '2' &&
+          end.A2 === '3',
+      );
+    });
+  },
+});

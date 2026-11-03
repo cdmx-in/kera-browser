@@ -711,7 +711,11 @@ export class Session {
       const parsed = spec.args.safeParse(rawArgs ?? {});
       if (!parsed.success) {
         const issues = parsed.error.issues.map(i => `${i.path.join('.') || '(arguments)'}: ${i.message}`).join('; ');
-        throw new LayerError('INVALID_ARGUMENT', `Invalid arguments for ${tool}: ${issues}`);
+        // A target written another way (a bare ref, a ref beside the target) fails as "Invalid input": say the shape.
+        const shape = /(^|; )target\b|"(ref|role)"/.test(issues)
+          ? '. target is an object: {"ref": "a12"} with a ref from the latest snapshot, or {"role": "button", "name": "Save"}'
+          : '';
+        throw new LayerError('INVALID_ARGUMENT', `Invalid arguments for ${tool}: ${issues}${shape}`);
       }
       args = parsed.data as Record<string, unknown>;
       tabId = this.#resolveTab(tool, args);

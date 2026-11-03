@@ -1,6 +1,7 @@
 // The agent's tools: the layer's catalogue as it is, plus the agent's own. One list for every model; `screenshot` is
-// offered to vision models only, and devtools and uploads from a path are not in the list at all. run_javascript is
-// offered: the gate asks the user for each script outside Auto mode.
+// offered to vision models only, and devtools, run_javascript and uploads from a path are not in the list at all.
+// run_javascript: agent sessions run with handover, which strips the eval capability (AGENTS.md: no page script),
+// so every call failed CAPABILITY_DISABLED and models retried it until the loop guard stopped them.
 import { argsJsonSchema, isReadOnly, TOOL_SPECS } from '@src/browser-control';
 import type { ToolDefinition } from '@src/llm';
 import { READ_ATTACHMENT_TOOL } from './attachments';
@@ -19,7 +20,7 @@ export interface AgentTool extends ToolDefinition {
 }
 
 /** Tools of the layer the agent never gets: devtools, coordinates and selectors. */
-const NOT_OFFERED = new Set(['devtools']);
+const NOT_OFFERED = new Set(['devtools', 'run_javascript']);
 
 const GROUPS: Record<string, AgentTool['group']> = {
   snapshot: 'reading',
@@ -68,12 +69,39 @@ function withAttachmentIds(schema: unknown): unknown {
   };
 }
 
+/**
+ * A tab id as the model sees it: a string of digits. Chrome's tab ids are ten digits, and Ollama renders a number from
+ * an earlier call in the conversation as a float (1.657934587e+09), which a model then copies, digits lost, into its
+ * next call; a string is rendered as written.
+ */
+const TAB_ID = {
+  type: 'string',
+  pattern: '^[0-9]+$',
+  description: 'A tab id as <browser-state> lists it, such as "1657934587". Default: the active tab',
+};
+
+/**
+ * The targets the agent can name, anywhere in a schema: a ref, or a role and name. Coordinates and selectors need
+ * capabilities agent sessions do not have, so offering them only earns CAPABILITY_DISABLED.
+ */
+function refOrRole(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(refOrRole);
+  if (!node || typeof node !== 'object') return node;
+  const out = Object.fromEntries(Object.entries(node).map(([k, v]) => [k, refOrRole(v)]));
+  if (Array.isArray(out.anyOf))
+    out.anyOf = (out.anyOf as Array<{ properties?: Record<string, unknown> }>).filter(
+      v => !v.properties?.selector && !v.properties?.x,
+    );
+  return out;
+}
+
 function schemaWithout(schema: unknown, hidden: string[]): unknown {
   const s = { ...(schema as Record<string, unknown>) };
   delete s.$schema;
   if (s.properties && typeof s.properties === 'object') {
-    const props = { ...(s.properties as Record<string, unknown>) };
+    const props = { ...(refOrRole(s.properties) as Record<string, unknown>) };
     for (const h of hidden) delete props[h];
+    if (props.tabId) props.tabId = TAB_ID;
     s.properties = props;
     if (Array.isArray(s.required)) s.required = (s.required as string[]).filter(r => !hidden.includes(r));
   }
@@ -129,6 +157,19 @@ export function toolsForRun(options: {
   return allTools(options.agentTools).filter(
     t => (t.required || !options.disabled?.includes(t.name)) && (t.name !== 'screenshot' || options.vision),
   );
+}
+
+/**
+ * The call's arguments with `tabId` as the layer takes it, a number: the model writes it as a string of digits. Null
+ * when the model wrote something else (a float such as "1.657934582e+09" may have lost digits, so it is never rounded
+ * to a tab).
+ */
+export function withTabId(args: Record<string, unknown>): Record<string, unknown> | null {
+  const id = args.tabId;
+  if (id === undefined || Number.isSafeInteger(id)) return args;
+  if (typeof id === 'string' && /^\d+$/.test(id.trim()) && Number.isSafeInteger(Number(id)))
+    return { ...args, tabId: Number(id) };
+  return null;
 }
 
 /** The kind of a call, for the execution policy. `tabs select` is ordered as a mutation. */

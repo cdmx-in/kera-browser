@@ -1,6 +1,6 @@
 // The agent loop, shaped like pi's runLoop: turns of one model call and its tool batch, with all browser policy in six
 // hooks. The worker owns the run; Chrome is reached through the ports.
-import { cutText, siteOf } from '@src/browser-control';
+import { cutText, quote, siteOf } from '@src/browser-control';
 import type { Result, UserStepDetails } from '@src/browser-control';
 import { requestOutputLimit, streamTurn } from '@src/llm';
 import type { ModelMessage, ToolCallRequest, TurnResult } from '@src/llm';
@@ -21,7 +21,7 @@ import { runCompaction, runShorten } from './compaction';
 import { attachmentBytes, attachmentParts, readAttachment } from './attachments';
 import { learnFrom, turnEffort } from './run';
 import type { ResolvedModel } from './run';
-import { allTools, DONE_TOOL, kindOf, PAGE_ACTIONS } from './tools';
+import { allTools, DONE_TOOL, kindOf, PAGE_ACTIONS, withTabId } from './tools';
 import type { AgentTool, ToolKind } from './tools';
 
 /** Every tool result is capped; a cut keeps a boundary's end marker. */
@@ -1057,11 +1057,24 @@ export class AgentLoop {
   /** Whether the user has sent a message while the run works. Set by the extension. */
   hasSteering: () => boolean = () => false;
 
-  async #execute(call: ToolCallRequest): Promise<CallOutcome> {
+  /** A tabId that is not a tab's id as listed: refused with the session's tabs, never rounded to one. */
+  async #badTabId(call: ToolCallRequest, kind: ToolKind, tabId: unknown): Promise<CallOutcome> {
+    const tabs = await this.options.layer.tabs().catch(() => null);
+    const listed = tabs?.tabs.map(t => `"${t.tabId}" ${quote(t.title || '(untitled)', 60)}`).join(', ') || 'none';
+    const text = `error INVALID_ARGUMENT (nothing dispatched)\ntabId ${quote(String(tabId), 40)} is not a tab id. Write it as a string of digits, exactly as listed. This conversation's tabs: ${listed}.`;
+    return { call, kind, text, isError: true };
+  }
+
+  async #execute(given: ToolCallRequest): Promise<CallOutcome> {
     const { emit, signal } = this.options;
-    const args = (call.input ?? {}) as Record<string, unknown>;
+    const written = (given.input ?? {}) as Record<string, unknown>;
+    // The model writes tab ids as strings; from here on the call carries the number (its history keeps the string).
+    const normalized = withTabId(written);
+    const args = normalized ?? written;
+    const call = args === written ? given : { ...given, input: args };
     const kind = kindOf(call.toolName, args);
     emit({ type: 'tool_execution_start', messageId: this.#replyId, row: this.#row(call, 'running') });
+    if (!normalized) return this.afterToolCall(await this.#badTabId(call, kind, written.tabId));
     const refused = await this.beforeToolCall(call);
     if (refused) return this.afterToolCall(refused);
     // The intent record is on disk before anything is dispatched.
