@@ -20,6 +20,11 @@ export default defineConfig({
     '@src': 'src',
   },
   manifest: {
+    // Public half of the signing key (private .pem kept off the repo): it fixes the extension ID at
+    // niehiilifenimkkbiikekkfjhaaellah wherever the unpacked folder sits, so chrome.storage (Kera key, settings) and the
+    // conversations survive an update. Changing or removing it changes the ID and empties every user's settings.
+    // The Chrome Web Store assigns its own key: drop this line from a build uploaded there.
+    key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuHW2BZigh7zL/CRVJwLrx+uPEIm+rQXuhZqO4G2N3IWbnJke0hDRISQF1dUwi3kBLY6pQsNjipNAX2v8/414ndrF+5YFcMFFNH8L+pNeDuQe4v5SBc80mfs5SlApo6RK1Lyt4g8z5QB6fZuSSRA9ja88bmfa2Crrh/ma6iriCJq72IOOmseqS8XSj8Nj+4EiZlC0WIYih6i0GefiV4f3n4w8NPvd2Qg+sxNjVPNFhzdMsY25y3ZdShkVovXpNeZAvHFlxm0oN2kJMB/VeEoQ3OgmKD3w4uvSqCKQDhj1iq5LP+Ta76CfS6f1Xqzttz4foLT8q91TszbjiTzTP0PLIwIDAQAB',
     // The name, description and the strings Chrome shows itself follow Chrome's language (public/_locales).
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',

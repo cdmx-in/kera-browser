@@ -11,6 +11,17 @@ A fork of [Nanobrowser](https://github.com/nanobrowser/nanobrowser) (Apache-2.0)
 3. The welcome page asks for that key: paste it, Connect, pick `gpt-6-luna` (or `gpt-oss:20b` for work that must stay on CodeMax's GPU), Use.
 4. `Alt+Shift+K` opens the panel on any tab.
 
+Kera's "Kera for Chrome" button (chat header) gives the same steps with a one-line command that downloads the zip with your Kera API key and unzips it into `%USERPROFILE%\kera-browser` (Windows) or `~/kera-browser` (macOS, Linux).
+
+## Update (unpacked copy)
+
+The copy does not update itself; Kera's button turns into "Update Kera Browser" when a newer zip is out.
+
+1. Unzip the new zip over the same folder, replacing the files (or run the button's command again).
+2. In `chrome://extensions`, click the reload arrow on Kera Browser.
+
+Never Load unpacked a second copy and never Remove the old one first: Remove deletes its API key, settings and conversations. Since 1.3.4 the manifest has a fixed `key`, so the extension ID is `niehiilifenimkkbiikekkfjhaaellah` whichever folder it is loaded from. Copies before 1.3.4 had an ID derived from their folder; moving to 1.3.4 means loading it once and entering the key again, then removing the older entries.
+
 Chrome shows "Kera Browser started debugging this browser" above a tab the agent works on: that is how it controls the page. Cancel ends the run. Keep Ask mode on for finance and HR portals; the agent then confirms before it submits, sends, deletes or uploads.
 
 ## Develop
