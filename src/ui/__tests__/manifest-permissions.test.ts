@@ -2,7 +2,7 @@
 // Nanobrowser did not have, or Chrome turns it off on update until the user accepts; the autorun build requires them,
 // so its checks run without a click.
 import { describe, expect, it } from 'vitest';
-import { OPTIONAL_PERMISSIONS, permissionLists } from '../manifest-permissions';
+import { hostLists, OPTIONAL_PERMISSIONS, permissionLists } from '../manifest-permissions';
 
 const FOUR = ['tabGroups', 'notifications', 'downloads', 'downloads.open'];
 
@@ -30,5 +30,15 @@ describe('manifest permission lists', () => {
   it('both builds require the same other permissions', () => {
     const others = (list: string[]) => list.filter(p => !FOUR.includes(p)).sort();
     expect(others(permissionLists('product').permissions)).toEqual(others(permissionLists('autorun').permissions));
+  });
+});
+
+describe('hostLists', () => {
+  it('the public build requires no host access and may ask, at run time, for http or https origins', () => {
+    expect(hostLists(false)).toEqual({ optional_host_permissions: ['http://*/*', 'https://*/*'] });
+  });
+
+  it('a build with a default address keeps <all_urls>, as 1.3.5 had it, and adds nothing optional', () => {
+    expect(hostLists(true)).toEqual({ host_permissions: ['<all_urls>'] });
   });
 });

@@ -40,3 +40,19 @@ export function permissionLists(build: 'product' | 'autorun'): PermissionLists {
     ? { permissions: [...REQUIRED_PERMISSIONS], optional_permissions: [...OPTIONAL_PERMISSIONS] }
     : { permissions: [...REQUIRED_PERMISSIONS, ...OPTIONAL_PERMISSIONS], optional_permissions: [] };
 }
+
+export interface HostLists {
+  host_permissions?: string[];
+  optional_host_permissions?: string[];
+}
+
+/**
+ * The manifest's host access. A build with a default server address (an organisation's own build) and the autorun build
+ * keep `<all_urls>` required, as every release up to 1.3.5 did: the installed copies already hold it, so an update asks
+ * nothing new, and the page border and pointer, which are scripts put into the pages, keep working. The public build
+ * requires no host access; it may ask, from a click, for the one origin of the user's Kera server (any http or https
+ * address, since a server may be on a private network), and the user decides.
+ */
+export function hostLists(broad: boolean): HostLists {
+  return broad ? { host_permissions: ['<all_urls>'] } : { optional_host_permissions: ['http://*/*', 'https://*/*'] };
+}
