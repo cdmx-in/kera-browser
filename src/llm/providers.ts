@@ -5,7 +5,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
-import { KERA_BASE_URL } from './kera';
+import { BUILD_DEFAULT_ADDRESS, keraApiBase, resolveKeraAddress } from './kera';
 
 export type ProviderKind =
   'anthropic' | 'openai' | 'gemini' | 'openai-compatible' | 'ollama' | 'lmstudio' | 'openrouter' | 'kera';
@@ -40,7 +40,6 @@ export const DEFAULT_BASE_URLS: Partial<Record<ProviderKind, string>> = {
   ollama: 'http://localhost:11434/v1',
   lmstudio: 'http://localhost:1234/v1',
   openrouter: 'https://openrouter.ai/api/v1',
-  kera: KERA_BASE_URL,
 };
 
 /**
@@ -57,17 +56,28 @@ export const CHAT_COMPLETIONS_KINDS: readonly ProviderKind[] = [
 
 /**
  * The OpenAI-compatible endpoint of an Ollama or LM Studio server: `/v1` is added unless the address ends with it,
- * so the user can type the server's address (ported).
+ * so the user can type the server's address (ported). Kera's is `<address>/api`, the address being the one stored with
+ * the provider, else the build's default (`buildDefault`, for tests), else none: undefined, and nothing is sent.
  */
-export function openAICompatibleBaseUrl(kind: ProviderKind, baseUrl?: string): string | undefined {
-  const fallback = DEFAULT_BASE_URLS[kind];
-  // OpenRouter's and Kera's addresses are fixed: their cards have no field for them.
-  if (kind === 'openrouter' || kind === 'kera') return fallback;
-  const url = (baseUrl?.trim() || fallback)?.replace(/\/+$/, '');
+export function openAICompatibleBaseUrl(
+  kind: ProviderKind,
+  baseUrl?: string,
+  buildDefault: string = BUILD_DEFAULT_ADDRESS,
+): string | undefined {
+  // OpenRouter's address is fixed: its card has no field for it.
+  if (kind === 'openrouter') return DEFAULT_BASE_URLS.openrouter;
+  if (kind === 'kera') {
+    const address = resolveKeraAddress(baseUrl, buildDefault);
+    return address ? keraApiBase(address) : undefined;
+  }
+  const url = (baseUrl?.trim() || DEFAULT_BASE_URLS[kind])?.replace(/\/+$/, '');
   if (!url) return undefined;
   if (kind === 'ollama' || kind === 'lmstudio') return url.endsWith('/v1') ? url : `${url}/v1`;
   return url;
 }
+
+/** Said when a Kera provider has no server address and the build has no default: nothing is sent anywhere. */
+export const NO_KERA_ADDRESS = 'Enter your Kera server address first (Settings → Providers).';
 
 export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): ChatModel {
   const { kind, modelName, apiKey } = spec;
@@ -104,11 +114,14 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
       };
     }
     default: {
-      // Ollama, LM Studio, OpenRouter and any other OpenAI-compatible server: chat completions at the base URL.
+      // Ollama, LM Studio, OpenRouter, Kera and any other OpenAI-compatible server: chat completions at the base URL.
+      const baseURL = openAICompatibleBaseUrl(kind, spec.baseUrl);
+      // Never fall back to the SDK's own address (OpenAI's): a key for one server must not go to another.
+      if (kind === 'kera' && !baseURL) throw new Error(NO_KERA_ADDRESS);
       const accounting = kind === 'openrouter' ? usageAccounting(fetch ?? globalThis.fetch) : null;
       const openai = createOpenAI({
         apiKey: apiKey || kind,
-        baseURL: openAICompatibleBaseUrl(kind, spec.baseUrl),
+        baseURL,
         ...(kind === 'openrouter'
           ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'Nanobrowser' } }
           : {}),

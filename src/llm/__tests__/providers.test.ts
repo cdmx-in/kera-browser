@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createModel, openAICompatibleBaseUrl } from '../providers';
+import { createModel, NO_KERA_ADDRESS, openAICompatibleBaseUrl } from '../providers';
 import type { ModelSpec } from '../providers';
 import { streamTurn } from '../stream';
 
@@ -120,15 +120,24 @@ describe('providers', () => {
     expect(r.url).toBe('http://10.0.0.2:8000/v1/chat/completions');
   });
 
-  it("Kera: its fixed address, whatever a card stored, with the user's Kera key", async () => {
+  it("Kera: the server's own address plus /api, with the user's Kera key", async () => {
     const r = await capture({
       kind: 'kera',
       modelName: 'gpt-6-luna',
       apiKey: 'sk-kera',
-      baseUrl: 'https://example.com/v1',
+      baseUrl: 'https://kera.example.com',
     });
-    expect(r.url).toBe('https://kera.cdmx.io/api/chat/completions');
+    expect(r.url).toBe('https://kera.example.com/api/chat/completions');
     expect(r.headers.get('authorization')).toBe('Bearer sk-kera');
+  });
+
+  it('Kera: a LAN or localhost server over plain http works the same', async () => {
+    const r = await capture({ kind: 'kera', modelName: 'm', apiKey: 'k', baseUrl: 'http://192.168.1.20:8080' });
+    expect(r.url).toBe('http://192.168.1.20:8080/api/chat/completions');
+  });
+
+  it('Kera: with no address and no build default nothing is built, so the key can never go to the SDK default', () => {
+    expect(() => createModel({ kind: 'kera', modelName: 'm', apiKey: 'sk-kera' })).toThrow(NO_KERA_ADDRESS);
   });
 
   it('OpenRouter sends its headers', async () => {
@@ -149,7 +158,19 @@ describe('helpers', () => {
     expect(openAICompatibleBaseUrl('openrouter', 'https://example.com/v1')).toBe('https://openrouter.ai/api/v1');
   });
 
-  it("keeps Kera's fixed address too", () => {
-    expect(openAICompatibleBaseUrl('kera', 'https://example.com/v1')).toBe('https://kera.cdmx.io/api');
+  it("builds Kera's API base from the stored address: a trailing slash or /api does not double up", () => {
+    expect(openAICompatibleBaseUrl('kera', 'https://kera.example.com', '')).toBe('https://kera.example.com/api');
+    expect(openAICompatibleBaseUrl('kera', ' http://localhost:8080 ', '')).toBe('http://localhost:8080/api');
+  });
+
+  it("uses a stored address before the build's default, and the default only when none is stored", () => {
+    const company = 'https://kera.cdmx.io';
+    expect(openAICompatibleBaseUrl('kera', 'https://mine.example.com', company)).toBe('https://mine.example.com/api');
+    expect(openAICompatibleBaseUrl('kera', undefined, company)).toBe('https://kera.cdmx.io/api');
+    expect(openAICompatibleBaseUrl('kera', '', company)).toBe('https://kera.cdmx.io/api');
+  });
+
+  it('has no Kera address at all when none is stored and the build has no default', () => {
+    expect(openAICompatibleBaseUrl('kera', undefined, '')).toBeUndefined();
   });
 });

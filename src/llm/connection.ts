@@ -1,6 +1,12 @@
 // Test models and model lists for the Models page. Called from the options page directly: the page needs no
 // worker command.
-import { CHAT_COMPLETIONS_KINDS, createModel, DEFAULT_BASE_URLS, openAICompatibleBaseUrl } from './providers';
+import {
+  CHAT_COMPLETIONS_KINDS,
+  createModel,
+  DEFAULT_BASE_URLS,
+  NO_KERA_ADDRESS,
+  openAICompatibleBaseUrl,
+} from './providers';
 import type { CreateModelOptions, ModelSpec } from './providers';
 import { isOriginRefused } from './errors';
 import { refusesImages, refusesReasoning, streamTurn } from './stream';
@@ -221,6 +227,7 @@ export async function listModels(
         spec.kind === 'openai'
           ? spec.baseUrl || 'https://api.openai.com/v1'
           : openAICompatibleBaseUrl(spec.kind, spec.baseUrl);
+      if (!base) throw new Error(spec.kind === 'kera' ? NO_KERA_ADDRESS : 'Enter the server address first.');
       const body = await get(`${base}/models`, spec.apiKey ? { authorization: `Bearer ${spec.apiKey}` } : {});
       entries = ((body.data as ListEntry[]) ?? [])
         .map((m): [string, ListEntry] => [String(m.id), m])

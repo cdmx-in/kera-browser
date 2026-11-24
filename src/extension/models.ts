@@ -1,6 +1,6 @@
 // Resolves a conversation's live model and effort to a callable model and its profile, from the stored providers and
 // keys. The key leaves storage only to build the provider client.
-import { createModel, detectContext, makePair, resolveProfile } from '@src/llm';
+import { createModel, detectContext, makePair, NO_KERA_ADDRESS, resolveKeraAddress, resolveProfile } from '@src/llm';
 import {
   capabilityOf,
   findModel,
@@ -14,6 +14,7 @@ import {
   usableModel,
 } from '@src/store/settings';
 import type { LivePair } from '@src/store/types';
+import { hasServerPermission } from '@src/ui/server-permission';
 import type { ResolvedModel } from '@src/agent/run';
 
 export class ModelUnavailable extends Error {}
@@ -43,6 +44,17 @@ export async function resolveModel(pair: LivePair | null): Promise<ResolvedModel
   if (!found) throw new ModelUnavailable(`The model ${ref.model} is no longer configured. Choose another one.`);
   if (found.model.noToolCalling) {
     throw new ModelUnavailable(`${ref.model} did not pass the tool-calling test and cannot run the agent.`);
+  }
+  if (found.provider.kind === 'kera') {
+    // The address is the provider's own, else the build's default (a provider saved before addresses were stored has none).
+    const address = resolveKeraAddress(found.provider.baseUrl);
+    if (!address) throw new ModelUnavailable(NO_KERA_ADDRESS);
+    // The user can take the permission back in chrome://extensions at any time.
+    if (!(await hasServerPermission(address))) {
+      throw new ModelUnavailable(
+        `Kera Browser no longer has permission to reach ${address}. Open Settings → Providers and press Allow access.`,
+      );
+    }
   }
   const keys = await keysStorage.get();
   // Ollama and LM Studio are asked again at the start of each run: the window a server loads can change. A slow or
