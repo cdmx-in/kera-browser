@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncE
 import {
   capabilityOf,
   DEFAULT_SETTINGS,
+  keraAddressOf,
   keysStorage,
   limitOf,
   providersStorage,
@@ -361,7 +362,7 @@ export function App() {
         className={`flex items-center gap-1 border-b px-2 py-1.5 ${empty && state.loaded ? 'border-transparent' : 'border-nb-border/60'}`}>
         {/* The mark opens the website in a new tab. */}
         <a
-          href={websiteUrl('/', 'side-panel')}
+          href={websiteUrl('/', 'side-panel', keraAddressOf(providers, settings.defaultModel))}
           target="_blank"
           rel="noreferrer"
           title={t('panel.website')}

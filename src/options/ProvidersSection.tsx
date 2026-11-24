@@ -17,6 +17,8 @@ import {
 } from '@src/store/settings';
 import type { ModelEntry, ProviderConfig } from '@src/store/settings';
 import { newId } from '@src/store/conversations';
+import { resolveKeraAddress } from '@src/llm/kera';
+import { KeraAddressField } from './KeraAddress';
 import { Button, Input, Notice, Select } from '@src/ui/components';
 import { SettingsCard } from './SettingsCard';
 import { VoiceCard } from './VoiceCard';
@@ -41,7 +43,7 @@ export const KINDS: Array<{ kind: ProviderKind; label: string; needsKey: boolean
 const EMPTY_PROVIDERS: ProviderConfig[] = [];
 const EMPTY_KEYS: Record<string, string> = {};
 
-/** The kinds a user may add: Kera alone, so page content goes to Kera and nowhere else. */
+/** The kinds a user may add: Kera alone, so page content goes to the user's own Kera server and nowhere else. */
 export const ENABLED_KINDS: readonly ProviderKind[] = ['kera'];
 
 /**
@@ -303,6 +305,8 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   const keys = useStorage(keysStorage, EMPTY_KEYS);
   const info = kindInfo(provider.kind);
   const local = LOCAL_KINDS.has(provider.kind) || provider.kind === 'openai-compatible';
+  const isKera = provider.kind === 'kera';
+  const providers = useStorage(providersStorage, EMPTY_PROVIDERS);
   const [newModel, setNewModel] = useState('');
   const [listed, setListed] = useState<ModelList>({ models: [], hidden: [] });
   const [showAll, setShowAll] = useState(false);
@@ -317,13 +321,13 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
   const key = keys[provider.id] ?? '';
   const name = provider.name.trim();
 
-  /** Lists the models with `apiKey`, the key just saved when called on saving it. */
-  const fetchModels = async (apiKey = key) => {
+  /** Lists the models with `apiKey` (the key just saved when called on saving it) at `baseUrl` (the address just saved). */
+  const fetchModels = async (apiKey = key, baseUrl = provider.baseUrl) => {
     const asked = ++listAsked.current;
     setListError(null);
     setListing(true);
     try {
-      const list = await listModels({ kind: provider.kind, apiKey, baseUrl: provider.baseUrl });
+      const list = await listModels({ kind: provider.kind, apiKey, baseUrl });
       if (asked !== listAsked.current) return;
       setListed(list);
       setShowAll(!list.models.length);
@@ -429,6 +433,22 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
             onSave={value => void updateProvider(provider.id, { name: value })}
           />
         </Line>
+        {isKera ? (
+          <Line label={t('kera.address')}>
+            <KeraAddressField
+              provider={provider}
+              providers={providers}
+              apiKey={key}
+              onSaved={address => {
+                runTests(
+                  provider.models.map(m => m.name),
+                  'add',
+                );
+                if (key) void fetchModels(key, address);
+              }}
+            />
+          </Line>
+        ) : null}
         {provider.kind !== 'ollama' && provider.kind !== 'lmstudio' ? (
           <Line label={keyLabel}>
             <KeyField
@@ -438,6 +458,8 @@ function ProviderItem({ provider }: { provider: ProviderConfig }) {
                 void keysStorage
                   .set(k => ({ ...k, [provider.id]: value }))
                   .then(() => {
+                    // A Kera provider with no address (and no build default) has nowhere to send the key yet.
+                    if (isKera && !resolveKeraAddress(provider.baseUrl)) return;
                     // An OpenAI-compatible endpoint lists only once it has an address.
                     if (provider.kind !== 'openai-compatible' || provider.baseUrl) void fetchModels(value);
                     runTests(

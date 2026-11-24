@@ -15,7 +15,9 @@ import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 import { applyTheme } from '@src/ui/theme';
 import { ENABLED_KINDS, KeyInput, KINDS, ListedCount, OriginFix } from './ProvidersSection';
-import { KERA_DEFAULT_MODEL } from '@src/llm/kera';
+import { BUILD_DEFAULT_ADDRESS, KERA_DEFAULT_MODEL, parseKeraAddress, resolveKeraAddress } from '@src/llm/kera';
+import { ServerAddressNotes, problemText } from './KeraAddress';
+import { connectToServer } from './kera-server';
 import { SettingsCard, SettingsRow } from './SettingsCard';
 import { BrowserFeaturesRow } from './BrowserFeaturesCard';
 import { listProblem, testModel } from './model-test';
@@ -183,6 +185,8 @@ function ModelSetup({ local }: { local: boolean }) {
   const [kind, setKind] = useState<ProviderKind>(kinds[0].kind);
   const info = kinds.find(k => k.kind === kind)!;
   const [baseUrl, setBaseUrl] = useState(info.baseUrl ?? '');
+  // Kera's server address, as typed: the build's default when it has one.
+  const [server, setServer] = useState(BUILD_DEFAULT_ADDRESS);
   const [apiKey, setApiKey] = useState('');
   const [found, setFound] = useState<ModelList | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -191,14 +195,33 @@ function ModelSetup({ local }: { local: boolean }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<{ originRefused: boolean; message: string } | null>(null);
   const [result, setResult] = useState<{ model: string; toolCalling: boolean; window?: number } | null>(null);
-  const base = local ? baseUrl.trim() : undefined;
+  const isKera = kind === 'kera';
+  // What the provider will store: the address Kera Browser was allowed to reach, else (a local server) what was typed.
+  const keraAddress = (() => {
+    const parsed = parseKeraAddress(server);
+    return parsed.ok ? parsed.address : undefined;
+  })();
+  const base = isKera ? keraAddress : local ? baseUrl.trim() : undefined;
 
   const connect = async () => {
     setBusy(true);
     setProblem(null);
     setResult(null);
     try {
-      const list = await listModels({ kind, apiKey, baseUrl: base });
+      let list: ModelList;
+      if (isKera) {
+        // First thing in the click: Chrome takes the permission request only while the click lasts.
+        const outcome = await connectToServer(server, apiKey);
+        if (!outcome.ok) {
+          setProblem({ originRefused: false, message: problemText(outcome) });
+          setFound(null);
+          return;
+        }
+        setServer(outcome.address);
+        list = outcome.list!;
+      } else {
+        list = await listModels({ kind, apiKey, baseUrl: base });
+      }
       setFound(list);
       // When every model is hidden, the list shows them all rather than look empty.
       setShowAll(!list.models.length);
@@ -229,7 +252,12 @@ function ModelSetup({ local }: { local: boolean }) {
     }
     const detected = test.patch.detectedContext;
     // One provider per kind and address: a second model joins the first's card.
-    const existing = (await providersStorage.get()).find(p => p.kind === kind && (p.baseUrl ?? '') === (base ?? ''));
+    // A Kera provider saved before addresses were stored has none and stands for the build's default.
+    const existing = (await providersStorage.get()).find(p =>
+      isKera
+        ? p.kind === kind && resolveKeraAddress(p.baseUrl) === base
+        : p.kind === kind && (p.baseUrl ?? '') === (base ?? ''),
+    );
     const provider: ProviderConfig = existing ?? {
       id: newId(),
       kind,
@@ -282,6 +310,28 @@ function ModelSetup({ local }: { local: boolean }) {
           ))}
         </Select>
       </SettingsRow>
+      {isKera ? (
+        <>
+          <SettingsRow label={t('kera.address')}>
+            <Input
+              aria-label={t('kera.address')}
+              className="w-72 max-w-full"
+              autoComplete="off"
+              spellCheck={false}
+              inputMode="url"
+              placeholder="https://kera.example.com"
+              value={server}
+              onChange={e => {
+                setServer(e.target.value);
+                setFound(null);
+                setProblem(null);
+                setResult(null);
+              }}
+            />
+          </SettingsRow>
+          <ServerAddressNotes address={keraAddress} />
+        </>
+      ) : null}
       {local ? (
         <SettingsRow label={t('models.baseUrl')}>
           <Input
@@ -298,7 +348,7 @@ function ModelSetup({ local }: { local: boolean }) {
       )}
       <Button
         className="self-end"
-        disabled={busy || (local ? !baseUrl.trim() : !apiKey.trim())}
+        disabled={busy || (isKera ? !server.trim() : false) || (local ? !baseUrl.trim() : !apiKey.trim())}
         onClick={() => void connect()}>
         {busy && !listed ? t('welcome.model.connecting') : t('welcome.model.connect')}
       </Button>

@@ -2,6 +2,7 @@
 // are never exported and never logged.
 import type { ProviderKind } from '../llm/providers';
 import { findRow, isCloudEndpoint } from '../llm/catalogue';
+import { resolveKeraAddress } from '../llm/kera';
 import { resolveProfile } from '../llm/profiles';
 import type { LearntFacts } from '../llm/profiles';
 import type { ReasoningEffort, ReasoningSupport } from '../llm/catalogue';
@@ -186,6 +187,13 @@ export function findModel(
   const provider = providers.find(p => p.id === ref.providerId);
   const model = provider?.models.find(m => m.name === ref.model);
   return provider && model ? { provider, model } : null;
+}
+
+/** The address of the Kera server the user works with: the default model's provider's, else the first Kera provider's. */
+export function keraAddressOf(providers: ProviderConfig[], ref: ModelRef | null | undefined): string | undefined {
+  const own = findProvider(providers, ref?.providerId ?? '');
+  const provider = own?.kind === 'kera' ? own : providers.find(p => p.kind === 'kera');
+  return provider ? resolveKeraAddress(provider.baseUrl) : undefined;
 }
 
 /**
