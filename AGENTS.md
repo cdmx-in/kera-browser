@@ -100,7 +100,7 @@ pnpm 10.34.7 is pinned in `package.json` (`packageManager`). If the global `pnpm
 - `pnpm install` - Install dependencies (also runs `wxt prepare`)
 - `pnpm dev` - WXT development mode; load `dist/` unpacked in Chrome
 - `pnpm build` - Build the Chrome MV3 extension into `dist/`
-- `pnpm zip` - Build, then pack `dist/` into `dist-zip/nanobrowser-<version>.zip` (source maps left out) for a release or the Chrome Web Store
+- `pnpm zip` - Build, then pack `dist/` into `dist-zip/kera-browser-<version>.zip` (source maps left out) for a release or the Chrome Web Store. The public build has no `key`, no default server and no required host access; `KERA_DEFAULT_URL` and `KERA_EXTENSION_KEY[_FILE]` make a build for one organisation (README, `docs/company-build.md`). The company's private key is never in the repository and never read: only a public key is accepted.
 - `pnpm type-check` - TypeScript type checking
 - `pnpm lint` - ESLint, including the import rules: the layer's (`src/browser-control/`) and the extension's (Import rules, above)
 - `pnpm test` - Unit tests (Vitest); tests live in `__tests__/` folders under `src/`

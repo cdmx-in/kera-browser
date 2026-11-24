@@ -1,7 +1,9 @@
-# Chrome Web Store listing: Kera Browser
+# Chrome Web Store listing: Kera Browser (CodeMax's own listing)
+
+This is the text of CodeMax's unlisted listing for its team, written for the company build (`docs/company-build.md`: `KERA_DEFAULT_URL=https://kera.cdmx.io`, built **without** `KERA_EXTENSION_KEY`, since the store assigns its own ID). It is not the text for the public build. Someone who publishes a modified public build to the store needs their own listing and privacy policy: adapt this one, and do not carry the company's name, server or extension ID.
 
 Paste these into the developer dashboard (https://chrome.google.com/webstore/devconsole). Visibility: **Unlisted**.
-Upload `dist-zip/kera-browser-<version>.zip` from `pnpm zip`.
+Upload `dist-zip/kera-browser-<version>-kera.cdmx.io.zip` from `pnpm zip` with those variables.
 
 ## Store listing
 
